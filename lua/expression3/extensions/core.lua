@@ -287,7 +287,7 @@ ext_core:RegisterFunction("system", "print", "...", "", 0, function(context, ...
 		values[#values + 1] = func_tostring(context, v[1], v[2]);
 	end
 
-	context.entity:SendToOwner(EXPR_PRINT_CHAT, unpack(values));
+	context.entity:SendToOwner(true, unpack(values));
 end);
 
 ---------------------
@@ -324,7 +324,7 @@ end
 ext_core:RegisterFunction("system", "printTable", "t", "", 0, function(context, t)
 	local s = tblString(t.tbl, pntbl:GetInt())[1]
 
-	context.entity:SendToOwner(EXPR_PRINT_GOLEM, s);
+	context.entity:SendToOwner(false, s);
 end);
 
 ext_core:RegisterFunction("system", "out", "...", "", 0, function(context, ...)
@@ -334,7 +334,7 @@ ext_core:RegisterFunction("system", "out", "...", "", 0, function(context, ...)
 		values[#values + 1] = func_tostring(context, v[1], v[2])
 	end
 
-	context.entity:SendToOwner(EXPR_PRINT_GOLEM, unpack(values));
+	context.entity:SendToOwner(false, unpack(values));
 end);
 
 	--[[

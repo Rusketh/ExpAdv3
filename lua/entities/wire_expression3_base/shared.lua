@@ -24,6 +24,16 @@ ENT.Contact         = "";
 
 ENT.Expression3 	= true;
 
+--[[
+	Net Messages
+]]
+
+include("sh_net.lua");
+
+--[[ 
+	Util
+]]
+
 local function name(id)
 	local obj = E3Class(id);
 	return obj and obj.name or id;
@@ -490,150 +500,6 @@ function ENT:Think()
 	end
 
 	hook.Run("Expression3.Entity.Think", self, self.context);
-end
-
---[[
-	Network Messages
-]]
-
-if SERVER then
-	util.AddNetworkString("Expression3.EntMessage");
-end
-
-function ENT:SendNetMessage(name, target, ...)
-
-	if CLIENT then
-		if IsValid(target) and target == LocalPlayer() then
-			self:ReceiveNetMessage(name, target, {...});
-		end
-	end
-
-	net.Start("Expression3.EntMessage");
-
-	net.WriteEntity(self);
-
-	net.WriteString(name);
-
-	if CLIENT then net.WriteEntity(target); end
-
-	net.WriteTable( {...} );
-
-	local context = EXPR_LIB.GetExecuting();
-
-	if context then
-		local usage = context.net_total + net.BytesWritten();
-
-		if usage > context:GetNetQuota() then
-			context:Throw("Network que overflow.");
-		end
-
-		context.net_total = usage;
-	end
-
-	if CLIENT then
-		net.SendToServer();
-	elseif target then
-		net.Send(target);
-	else
-		net.Broadcast();
-	end
-end
-
-function ENT:ReceiveNetMessage(name, target, values)
-	local cb = self["Net" .. name];
-
-	-- No CB?, Forward this to the cleint for now.
-	if not cb then return true; end
-
-	return cb(self, target, values);
-end
-
-net.Receive("Expression3.EntMessage", function()
-	local target;
-
-	local entity = net.ReadEntity();
-
-	local name = net.ReadString();
-
-	if SERVER then target = net.ReadEntity(); end
-
-	local values = net.ReadTable();
-
-	if not IsValid(entity) or not entity.ReceiveNetMessage then return; end
-
-	local sendToClient = entity:ReceiveNetMessage(name, target, values);
-
-	if SERVER and sendToClient then
-
-		net.Start("Expression3.EntMessage");
-
-		net.WriteEntity(self);
-
-		net.WriteString(name);
-
-		net.WriteTable( values );
-
-		net.Send(target);
-	end
-end);
-
---[[
-	Chat Messages
-]]
-
-if SERVER then
-	util.AddNetworkString("SendToChat");
-	util.AddNetworkString("SendToGolem");
-end
-
-EXPR_LIB.RegisterPermission("SendToChat", "", "This gate is allowed to send messages to your chatbox.")
-EXPR_LIB.RegisterPermission("SendToGolem", "", "This gate is allowed to send messages to your Golem console.")
-
-EXPR_PRINT_GOLEM = 0;
-EXPR_PRINT_CHAT = 1;
-
-function ENT:SendToOwner( type, ... )
-	if type == EXPR_PRINT_CHAT then
-		self:SendNetMessage("ChatMessage", self.player, ...);
-	else
-		self:SendNetMessage("GolemMessage", self.player, ...);
-	end
-end
-
-function ENT:NetChatMessage(target, values)
-
-	local context = self.context;
-
-	if context then
-		if not context:HasPerm(target, "SendToChat") then
-			return false;
-		end
-	end
-
-	if CLIENT then
-		chat.AddText( unpack(values) );
-	end
-
-	return true;
-
-end
-
-
-function ENT:NetGolemMessage(target, values)
-
-	local context = self.context;
-
-	if context then
-		if not context:HasPerm(target, "SendToGolem") then
-			return false;
-		end
-	end
-
-	if CLIENT then
-		Golem.Print( unpack(values) );
-	end
-
-	return true;
 end
 
 --[[

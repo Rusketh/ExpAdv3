@@ -240,6 +240,19 @@ function CONTEXT:GetBufferVariance(average)
 	return sum / (samples - 1);
 end
 
+function CONTEXT:AddNetUsage(bytes)
+
+	if not self.inExe then return; end
+
+	local value = self.net_total - bytes;
+
+	if ( value < 0 ) then value = 0; end
+
+	self.net_total = value;
+
+	if vale == 0 then self:Throw("Net limit exceeded."); end
+end
+
 --
 
 
@@ -256,11 +269,11 @@ function CONTEXT:UpdateQuotaValues()
 			end
 		end
 
-		self.net_total = 0;
-
 		self.cpu_total = 0;
 
 		self.cpu_average = average;
+
+		self.net_total = self:GetNetQuota();
 
 		if (self.update) then
 			self.update = false;
@@ -319,6 +332,8 @@ function CONTEXT:PreExecute()
 
 	__exe = self;
 
+	self.inExe = true;
+
 	bJit = jit.status();
 
 	jit.off();
@@ -330,6 +345,8 @@ end
 
 function CONTEXT:PostExecute()
 	debug.sethook(fdhk, sdhk, ndhk);
+
+	self.inExe = false;
 
 	if (bJit) then
 		jit.on();

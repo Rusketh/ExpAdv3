@@ -10,10 +10,256 @@
 	::Network Extension::
 ]]
 
-local NET_MAX = 10;
-local NET_LIMIT = 512;
+if true then return; end --File disabled.
 
 local extension = EXPR_LIB.RegisterExtension("network");
+
+--[[
+
+]]
+
+
+extension:SetSharedState();
+
+extension:RegisterLibrary("net");
+
+extension:RegisterFunction("net", "start", "s", "", 0, function(context, name)
+	context.data.usermessage_buffer = {};
+	context.data.usermessage_message = name;
+end, false);
+
+--[[
+	Write
+]]
+
+local function write(context, value)
+	local b = context.data.usermessage_buffer;
+
+	b[#b + 1] = value;
+end
+
+extension:RegisterFunction("net", "writeAngle", "a", "", 0, write, true);
+
+extension:RegisterFunction("net", "writeBool", "b", "", 0,, write, true);
+
+extension:RegisterFunction("net", "writeColor", "c", "", 0, , write, true);
+
+extension:RegisterFunction("net", "writeEntity", "e", "", 0, n, write, true);
+
+extension:RegisterFunction("net", "writeInt", "n", "", 0, write, true);
+
+extension:RegisterFunction("net", "writeString", "s", "", 0, write, true);
+
+extension:RegisterFunction("net", "writeTable", "t", "", 0, , write, true);
+
+extension:RegisterFunction("net", "writeVector", "v", "", 0, write, true);
+
+--[[
+	Read
+]]
+
+extension:RegisterFunction("net", "readAngle", "", "a", 1, function(context)
+	local buffer = context.data.usermessage_readBuffer;
+
+	if not buffer then return end;
+
+	local i = context.data.usermessage_read or 0;
+
+	local value = buffer[i];
+
+	if ( not IsAngle(value) ) then
+		return;
+	end
+
+	context.data.usermessage_read = i + 1;
+
+	return value;
+
+end, false);
+
+extension:RegisterFunction("net", "readBool", "", "b", 1, function(context)
+	local buffer = context.data.usermessage_readBuffer;
+
+	if not buffer then return end;
+
+	local i = context.data.usermessage_read or 0;
+
+	local value = buffer[i];
+
+	if ( not isbool(value) ) then
+		return;
+	end
+
+
+	context.data.usermessage_read = i + 1;
+
+	return value;
+
+end, false);
+
+extension:RegisterFunction("net", "readColor", "", "c", 1,  function(context)
+	local buffer = context.data.usermessage_readBuffer;
+
+	if not buffer then return end;
+
+	local i = context.data.usermessage_read or 0;
+
+	local value = buffer[i];
+
+	if ( not IsColor(value) ) then
+		return;
+	end
+
+
+	context.data.usermessage_read = i + 1;
+
+	return value;
+
+end, false);
+
+extension:RegisterFunction("net", "readEntity", "", "e", 1, function(context)
+	local buffer = context.data.usermessage_readBuffer;
+
+	if not buffer then return end;
+
+	local i = context.data.usermessage_read or 0;
+
+	local value = buffer[i];
+
+	if ( not IsEntity(value) ) then
+		return;
+	end
+
+	context.data.usermessage_read = i + 1;
+
+	return value;
+
+end, false);
+
+extension:RegisterFunction("net", "readInt", "n", "n", 1, function(context)
+	local buffer = context.data.usermessage_readBuffer;
+
+	if not buffer then return end;
+
+	local i = context.data.usermessage_read or 0;
+
+	local value = buffer[i];
+
+	if ( not isnumber(value) ) then
+		return;
+	end
+
+	context.data.usermessage_read = i + 1;
+
+	return value;
+
+end, false);
+
+extension:RegisterFunction("net", "readString", "", "s", 1, function(context)
+	local buffer = context.data.usermessage_readBuffer;
+
+	if not buffer then return end;
+
+	local i = context.data.usermessage_read or 0;
+
+	local value = buffer[i];
+
+	if ( not isstring(value) ) then
+		return;
+	end
+
+	context.data.usermessage_read = i + 1;
+
+	return value;
+
+end, false);
+
+extension:RegisterFunction("net", "readTable", "", "t", 1, function(context)
+	local buffer = context.data.usermessage_readBuffer;
+
+	if not buffer then return end;
+
+	local i = context.data.usermessage_read or 0;
+
+	local value = buffer[i];
+
+	if ( not istable(value) ) then
+		return;
+	end
+
+	context.data.usermessage_read = i + 1;
+
+	return value;
+
+end, false);
+
+extension:RegisterFunction("net", "readVector", "", "v", 1, function(context)
+	local buffer = context.data.usermessage_readBuffer;
+
+	if not buffer then return end;
+
+	local i = context.data.usermessage_read or 0;
+
+	local value = buffer[i];
+
+	if ( not IsVector(value) ) then
+		return;
+	end
+
+
+	context.data.usermessage_read = i + 1;
+
+	return value;
+
+end, false);
+
+
+--[[
+	Send
+]]
+
+extention:RegisterNetTemplate( "UserMessage", "t", function(player, len)
+	--TODO: This
+end)
+
+extension:RegisterFunction("net", "send", "", "", 0, net.Send, true);
+extension:RegisterFunction("net", "sendOmit", "", "", 0, net.SendOmit, true);
+extension:RegisterFunction("net", "sendPAS", "", "", 0, net.SendPAS, true);
+extension:RegisterFunction("net", "sendPVS", "", "", 0, net.SendPVS, true);
+extension:RegisterFunction("net", "sendToServer", "", "", 0, net.SendToServer, true);
+
+extension:RegisterFunction("net", "send", "", "", 0, function (context)
+	context:AddNetUsage( net.BytesWritten() );
+
+	if CLIENT then return net.SendToServer(); end
+
+	if IsValid(player) then
+		net.Send(player);
+	else
+		net.Broadcast();
+	end
+
+	player = nil;
+
+end, false);
+
+
+--[[
+extension:RegisterFunction("net", "sendOmit", "", "", 0, net.SendOmit, true);
+extension:RegisterFunction("net", "sendPAS", "", "", 0, net.SendPAS, true);
+extension:RegisterFunction("net", "sendPVS", "", "", 0, net.SendPVS, true);
+extension:RegisterFunction("net", "sendToServer", "", "", 0, net.SendToServer, true);
+extension:RegisterFunction("net", "start", "", "", 0, net.Start, true);
+]]
+
+
+
+
+
+
+--AddNetUsage(bytes)
+
+
 
 --[[
 	Extension class with methods
