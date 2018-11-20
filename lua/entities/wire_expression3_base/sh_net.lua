@@ -26,9 +26,9 @@ EXPR_LIB.net_templates = {}
 ]]
 
 function EXPR_LIB.AddNetTemplate(name, template, reciever)
-	if reciever then util.AddNetworkString(name); end
+	if reciever and SERVER then util.AddNetworkString(name); end
 
-	EXPR_LIB.net_templates[name] = string.Explode("," template);
+	EXPR_LIB.net_templates[name] = string.Explode(",", template);
 
 
 	if reciever then
@@ -44,7 +44,7 @@ end
 
 function ENT:SendNetMessage( player, name, ...)
 	
-	if ( pcall(Net.Start, "Expression." .. name ) ) then
+	if ( pcall(net.Start, "Expression." .. name ) ) then
 		-- This is more an attempt to ward of the termination message.
 
 		net.WriteEntity(self);
@@ -78,7 +78,7 @@ end
 function ENT:SendNetWithTemplate(name, ...)
 	local template = EXPR_LIB.net_templates[name];
 
-	if not template; then return; end
+	if not template then return; end
 
 	local values = { ... };
 
@@ -122,7 +122,7 @@ end
 function ENT:ReceiveNetWithTemplate(name)
 	local template = EXPR_LIB.net_templates[name];
 
-	if not template; then return; end
+	if not template then return; end
 
 	local values = { };
 
@@ -168,17 +168,20 @@ end
 	Golem/Chat Message Owner
 ]]
 
-function ENT:SendToOwner(chat, ...)
-	return self:SendToPlayersChat(self.player, chat, ...);
+function ENT:SendToOwner(tochat, ...)
+	return self:SendToPlayer(self.player, tochat, ...);
 end
 
-function ENT:SendToPlayer(player, chat ...)
+function ENT:SendToPlayer(player, tochat, ...)
 	if (SERVER or LocalPlayer() ~= player) then
 		return self:SendNetMessage( player, "SendMessage", chat, ...);
-	else
+	elseif ( tochat ) then
 		chat.AddText(...);
-		return 0;
+	else
+		Golem.Print(...);
 	end
+	
+	return 0;
 end
 
 EXPR_LIB.AddNetTemplate("SendMessage", "b,...", function(len, from)
@@ -198,7 +201,7 @@ EXPR_LIB.AddNetTemplate("SendMessage", "b,...", function(len, from)
 		end
 
 		if SERVER then
-			entity:SendNetMessage( player, "SendMessage", true, ...);
+			entity:SendNetMessage( player, "SendMessage", true, unpack(result) );
 		elseif net.ReadBit() == 1 then
 			chat.AddText( unpack(result) );
 		else

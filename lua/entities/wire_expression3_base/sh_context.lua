@@ -255,6 +255,11 @@ end
 
 --
 
+function CONTEXT:QueuePostExe(func, context, ...)
+	self.post_exe[ #self.post_exe ] = {func, context, ...};
+end
+
+--
 
 function CONTEXT:UpdateQuotaValues()
 	if (self.status) then
@@ -334,6 +339,8 @@ function CONTEXT:PreExecute()
 
 	self.inExe = true;
 
+	self.post_exe = {};
+
 	bJit = jit.status();
 
 	jit.off();
@@ -353,6 +360,17 @@ function CONTEXT:PostExecute()
 	end
 
 	__exe = nil;
+
+	if #self.post_exe < 0
+		for i = 1, #self.post_exe do
+			local t = self.post_exe[i]
+			
+			if t[2] then [1](self, unpack(t, 3));
+			else [1](unpack(t, 3)); end
+		end
+	end
+
+	self.post_exe = nil;
 end
 
 --[[
