@@ -11,6 +11,8 @@
 
 	E3 Will require CPPI interface for the entity,
 	if it doesnt exist it needs to fake one.
+
+	This is dumb now :D
 ]]
 
 AddCSLuaFile();

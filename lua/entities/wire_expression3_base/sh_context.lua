@@ -361,12 +361,15 @@ function CONTEXT:PostExecute()
 
 	__exe = nil;
 
-	if #self.post_exe < 0
+	if #self.post_exe < 0 then
 		for i = 1, #self.post_exe do
 			local t = self.post_exe[i]
 			
-			if t[2] then [1](self, unpack(t, 3));
-			else [1](unpack(t, 3)); end
+			if t[2] then
+				t[1](self, unpack(t, 3));
+			else
+				t[1](unpack(t, 3));
+			end
 		end
 	end
 

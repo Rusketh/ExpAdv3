@@ -288,6 +288,7 @@ end
 --[[
 ]]
 
+--[[
 function ENT:WriteToLogger(...)
 	local log, logger = {...}, self.Logger;
 
@@ -306,19 +307,19 @@ function ENT:FlushLogger()
 		self:SendToOwner(true, unpack(self.Logger));
 		self.Logger = nil;
 	end
-end
+end]]
 
 function ENT:PrintStackTrace(stackTrace)
 if (stackTrace and #stackTrace > 0) then
 		self:WriteToLogger("{\n");
 		for level, info in pairs(stackTrace) do
 			if (info.what == "C") then
-				self:WriteToLogger(string.format( "\t%i: C function\t\"%s\"\n", level, info.name));
+				self:SendToOwner(true, string.format( "\t%i: C function\t\"%s\"\n", level, info.name));
 			else
-				self:WriteToLogger(string.format("\t%i: Line %d\t\"%s\"\t\t%s\n", level, info.currentline, info.name, info.short_src));
+				self:SendToOwner(true, string.format("\t%i: Line %d\t\"%s\"\t\t%s\n", level, info.currentline, info.name, info.short_src));
 			end
 		end
-		self:WriteToLogger("}\n");
+		self:SendToOwner(true, "}\n");
 	end
 end
 
@@ -326,43 +327,38 @@ function ENT:HandelThrown(thrown, stackTrace)
 	self:SendToOwner(false, Color(255,0,0), "One of your Expression3 gate's has errored (see golem console).");
 
 	if (not thrown) then
-		self:WriteToLogger(Color(255,0,0), "Suffered an unkown error (no reason given).");
-		self:PrintStackTrace(stackTrace)
-		self:FlushLogger();
+		self:SendToOwner(true, Color(255,0,0), "Suffered an unkown error (no reason given).");
+		self:PrintStackTrace(stackTrace);
 		self:ShutDown();
 
 	elseif (isstring(thrown)) then
-		self:WriteToLogger(Color(255,0,0), "Suffered a lua error:\n");
-		self:WriteToLogger("    ", Color(0,255, 255), "Error: ", Color(255, 255, 255), thrown);
+		self:SendToOwner(true, Color(255,0,0), "Suffered a lua error:\n");
+		self:SendToOwner(true, "    ", Color(0,255, 255), "Error: ", Color(255, 255, 255), thrown);
 		self:PrintStackTrace(stackTrace);
-		self:FlushLogger();
 		self:ShutDown();
 
 	elseif (istable(thrown)) then
 		if (thrown.ctx and thrown.ctx ~= self.context) then
-			self:WriteToLogger(Color(255,0,0), "Suffered a ", thrown.state, " error:\n");
-			self:WriteToLogger(Color(0,255, 255), "Message: ", Color(255, 255, 255), "Remotly executed function threw an error", "\n");
-			self:WriteToLogger(Color(0,255, 255), "Thrown error: ", Color(255, 255, 255), thrown.msg, "\n");
-			self:WriteToLogger(Color(0,255, 255), "External Trace: ", Color(255, 255, 255), "Line ", thrown.line, " Char ", thrown.char, " ", thrown.instruction);
+			self:SendToOwner(true, Color(255,0,0), "Suffered a ", thrown.state, " error:\n");
+			self:SendToOwner(true, Color(0,255, 255), "Message: ", Color(255, 255, 255), "Remotly executed function threw an error", "\n");
+			self:SendToOwner(true, Color(0,255, 255), "Thrown error: ", Color(255, 255, 255), thrown.msg, "\n");
+			self:SendToOwner(true, Color(0,255, 255), "External Trace: ", Color(255, 255, 255), "Line ", thrown.line, " Char ", thrown.char, " ", thrown.instruction);
 			self:PrintStackTrace(stackTrace);
-			self:FlushLogger();
 			self:ShutDown();
 
 			if (IsValid(thrown.ctx.entity)) then
 				thrown.ctx.entity:SendToOwner(false, Color(255,0,0), "One of your Expression3 gate's has errored (see golem console).");
-				thrown.ctx.entity:WriteToLogger(Color(255,0,0), "Suffered a ", thrown.state, " error:\n")
-				thrown.ctx.entity:WriteToLogger(Color(0,255, 255), "Message: ", Color(255, 255, 255), "A function executed from a remote source threw an error.", "\n")
-				thrown.ctx.entity:WriteToLogger(Color(0,255, 255), "Thrown error: ", Color(255, 255, 255), thrown.msg, "\n");
-				thrown.ctx.entity:WriteToLogger(Color(0,255, 255), "At: ", Color(255, 255, 255), "Line ", thrown.line, " Char ", thrown.char, " ", thrown.instruction);
+				thrown.ctx.entity:SendToOwner(true, Color(255,0,0), "Suffered a ", thrown.state, " error:\n")
+				thrown.ctx.entity:SendToOwner(true, Color(0,255, 255), "Message: ", Color(255, 255, 255), "A function executed from a remote source threw an error.", "\n")
+				thrown.ctx.entity:SendToOwner(true, Color(0,255, 255), "Thrown error: ", Color(255, 255, 255), thrown.msg, "\n");
+				thrown.ctx.entity:SendToOwner(true, Color(0,255, 255), "At: ", Color(255, 255, 255), "Line ", thrown.line, " Char ", thrown.char, " ", thrown.instruction);
 				thrown.ctx.entity:PrintStackTrace(stackTrace);
-				thrown.ctx.entity:FlushLogger();
 				thrown.ctx.entity:ShutDown();
 			end
 		else
-			self:WriteToLogger(Color(255,0,0), "Suffered a ", thrown.state, " error:\n")
-			self:WriteToLogger("    ", Color(0,255, 255), "Message: ", Color(255, 255, 255), thrown.msg, "\n")
-			self:WriteToLogger("    ", Color(0,255, 255), "At: ", Color(255, 255, 255), "Line ", thrown.line, " Char ", thrown.char, " ", thrown.instruction);
-			self:FlushLogger()
+			self:SendToOwner(true, Color(255,0,0), "Suffered a ", thrown.state, " error:\n")
+			self:SendToOwner(true, "    ", Color(0,255, 255), "Message: ", Color(255, 255, 255), thrown.msg, "\n")
+			self:SendToOwner(true, "    ", Color(0,255, 255), "At: ", Color(255, 255, 255), "Line ", thrown.line, " Char ", thrown.char, " ", thrown.instruction);
 			self:ShutDown();
 		end
 	end
