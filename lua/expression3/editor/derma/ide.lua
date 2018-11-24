@@ -873,7 +873,7 @@ function PANEL:DoValidate( Goto, Code, Native )
 		if (self.validator and not self.validator.finished) then
 			local v = math.ceil(((self.validator.tokenizer.__pos or 1) / (self.validator.tokenizer.__lengh or 1)) * 100);
 			self.btnValidate:SetColor( Color( 50, 50, 150 ) );
-			self.btnValidate:SetText( "Validating... (" .. v .. "%)" );
+			self.btnValidate:SetText( "Validating... (" .. math.min(v,100) .. "%)" );
 		end
 	end)
 end
