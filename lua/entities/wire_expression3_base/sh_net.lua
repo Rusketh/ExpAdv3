@@ -26,7 +26,7 @@ EXPR_LIB.net_templates = {}
 ]]
 
 function EXPR_LIB.AddNetTemplate(name, template, reciever)
-	if reciever and SERVER then util.AddNetworkString(name); end
+	if reciever and SERVER then util.AddNetworkString("Expression3." .. name); end
 
 	EXPR_LIB.net_templates[name] = string.Explode(",", template);
 
@@ -34,7 +34,7 @@ function EXPR_LIB.AddNetTemplate(name, template, reciever)
 	if reciever then
 		EXPR_LIB.net_templates[name].reciever = reciever;
 
-		net.Receive( "Expression." .. name, reciever );
+		net.Receive( "Expression3." .. name, reciever );
 	end
 end
 
@@ -44,35 +44,36 @@ end
 
 function ENT:SendNetMessage( player, name, ...)
 	
-	if ( pcall(net.Start, "Expression." .. name ) ) then
-		-- This is more an attempt to ward of the termination message.
+	net.Start( "Expression3." .. name );
 
-		net.WriteEntity(self);
+	print("net message started");
 
-		net.WriteEntity(player);
+	net.WriteEntity(self);
 
-		self:SendNetWithTemplate(name, ...);
+	net.WriteEntity(player);
 
-		if self.context and self.context.inExe then
-			self.context:AddNetUsage(bytes);
-		end
+	self:SendNetWithTemplate(name, ...);
 
-		local bytes = net.BytesWritten();
+	local bytes = net.BytesWritten();
 
-		if CLIENT then
-			net.SendToServer();
-
-		elseif IsValid(player) then
-			net.Send(player);
-
-		else
-			net.Broadcast();
-		end
-
-		return bytes;
+	if self.context and self.context.inExe then
+		self.context:AddNetUsage(bytes);
 	end
 
-	return 0;
+	if CLIENT then
+		print("Sent to server")
+		net.SendToServer();
+
+	elseif IsValid(player) then
+		print("Sent to player: ", player)
+		net.Send(player);
+
+	else
+		print("Broadcasted")
+		net.Broadcast();
+	end
+
+	return bytes;
 end
 
 function ENT:SendNetWithTemplate(name, ...)
@@ -85,7 +86,7 @@ function ENT:SendNetWithTemplate(name, ...)
 	for i = 1, #template do
 		local t = template[i];
 		local v = values[i];
-
+		
 		if t == "n" then
 			net.WriteUInt(v, 64); --Why? because lua ints are doubles, doubles are 64.
 								  --Shut up, I am trying to be smart here, I think.
@@ -108,12 +109,12 @@ function ENT:SendNetWithTemplate(name, ...)
 			net.WriteTable(v);
 
 		elseif t == "..." then
-			net.WriteTable({ unpack(t, i + 1) });
+			net.WriteTable({ unpack(values, i) });
 
 			break;
 
 		else
-			self:SendNetWithTemplate(t, unpack(t, i))
+			self:SendNetWithTemplate(t, unpack(v, i))
 
 		end
 	end
@@ -151,7 +152,9 @@ function ENT:ReceiveNetWithTemplate(name)
 			values[i] = net.ReadTable();
 
 		elseif t == "..." then
-			values[i] = net.ReadTable({ unpack(t, i + 1) });
+			for _, v in pairs( net.ReadTable() ) do
+				values[#values + 1] = v;
+			end
 
 			break;
 
@@ -173,6 +176,8 @@ function ENT:SendToOwner(tochat, ...)
 end
 
 function ENT:SendToPlayer(player, tochat, ...)
+	print("SENDTOPLAYER: ", player, tochat, ...)
+
 	if (SERVER or LocalPlayer() ~= player) then
 		return self:SendNetMessage( player, "SendMessage", chat, ...);
 	elseif ( tochat ) then
@@ -186,22 +191,26 @@ end
 
 EXPR_LIB.AddNetTemplate("SendMessage", "b,...", function(len, from)
 
-	local entity = net.Readentity();
+	local entity = net.ReadEntity();
 
-	local player = net.ReadPlayer();
+	local player = net.ReadEntity();
 
 	if ( IsValid(entity) and entity.ReceiveNetWithTemplate ) then
 
 		local result = entity:ReceiveNetWithTemplate("SendMessage");
 
-		if not (player == entity.player) then
-			if ( not self.context ) or ( not self.context:HasPerm(player, "SendMessage") ) then
+		PrintTable(result);
+
+		--[[if not player == entity:GetOwner() then
+			print("Player is not entity player")
+			if ( not entity.context ) or ( not entity.context:HasPerm(player, "SendMessage") ) then
+				print("entity does not have player permission")
 				return;
 			end
-		end
+		end]]
 
 		if SERVER then
-			entity:SendNetMessage( player, "SendMessage", true, unpack(result) );
+			entity:SendNetMessage( player, "SendMessage", unpack(result) );
 		elseif net.ReadBit() == 1 then
 			chat.AddText( unpack(result) );
 		else
@@ -211,6 +220,98 @@ EXPR_LIB.AddNetTemplate("SendMessage", "b,...", function(len, from)
 end);
 
 --[[
-	
+	Golem Logger
 ]]
 
+function ENT:WriteToLogger(...)
+	local log, logger = {...}, self.Logger;
+
+	if (not logger) then
+		self.Logger = log;
+		return;
+	end
+
+	for i = 1, #log do
+		logger[#logger + 1] = log[i];
+	end
+end
+
+function ENT:FlushLogger()
+	if (self.Logger and #self.Logger > 0) then
+		self:SendToOwner(false, unpack(self.Logger));
+		self.Logger = nil;
+	end
+end
+
+--[[
+	Uploading
+]]
+
+--[[
+Current one is good enogh for now, once finished this might be better.
+Nope, i need this now.
+
+if SERVER then
+	function ENT:RequestUpload(player)
+		timer.simple(0.5, function()
+			if IsValid(self) then self:SendNetMessage(player, "RequestUpload"); end
+		end);
+	end
+end
+
+EXPR_LIB.AddNetTemplate("RequestUpload", "", function(len, from)
+	local entity = net.ReadEntity();
+
+	local player = net.ReadEntity();
+
+	if ( IsValid(entity) and entity.SubmitToServer ) then
+		entity:SubmitToServer( Golem.GetCode() );
+	end
+end);
+
+if CLIENT then
+
+	function ENT:SubmitToServer(script)
+		if (not script or script == "") then
+			chat.AddText(Color(255, 0, 0), "Can not upload blank script to server.");
+			return;
+		end
+
+		local ok, result = self:ValidateCode(script, nil);
+
+		if not ok then
+			self:HandelThrown(result);
+			return;
+		end
+
+		local files = { };
+
+		for _, file_path in pairs(result.directives.includes) do
+			files[file_path] = file.Read("golem/" .. file_path .. ".txt", "DATA");
+		end
+
+		self:SendNetMessage(nil, "UploadScript", script, files);
+	end
+
+end
+
+EXPR_LIB.AddNetTemplate("UploadScript", "s,t", function(len, from)
+	local entity = net.ReadEntity();
+
+	local player = net.ReadEntity();
+
+	if ( IsValid(entity) and entity.SubmitUpload ) then
+		local result = self:ReceiveNetWithTemplate("UploadScript");
+		local code, files = result[1], result[2];
+		entity:SubmitUpload(code, files, from);
+	end
+end);
+
+if SERVER then
+
+	function ENT:SubmitUpload(code, files, from)
+		self.player = from;
+
+	end
+
+end]]

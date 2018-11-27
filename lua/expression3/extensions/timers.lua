@@ -12,23 +12,29 @@
 
 hook.Add("Expression3.Entity.BuildSandbox", "Expression3.Timers", function(entity, ctx, env)
 	ctx.data.timers = {};
+	ctx.data.stimers = {};
 end);
+
+--[[
+
+]]
 
 local extension = EXPR_LIB.RegisterExtension("time");
 
 extension:RegisterLibrary("timer");
 
 extension:RegisterFunction("timer", "simple", "n,f,...", "", 0, function(ctx, d, f, ...)
-	local timers = ctx.data.timers;
+	local stimers = ctx.data.stimers;
 
-	timers[#timers + 1] = {
+	stimers[#stimers + 1] = {
 		delay = d,
-		next = CurTime() + d;
-		paused = false;
-		reps = 1;
-		count = 0;
-		func = f;
-		values = {...};
+		next = CurTime() + d,
+		paused = false,
+		reps = 1,
+		count = 0,
+		func = f,
+		values = {...},
+		simple = true,
 	};
 
 end, false);
@@ -36,17 +42,21 @@ end, false);
 extension:RegisterFunction("timer", "create", "s,n,n,f,...", "", 0, function(ctx, n, d, r, f, ...)
 	local timers = ctx.data.timers;
 
-	timers[#timers + 1] = {
+	timers[n] = {
 		delay = d,
-		next = CurTime() + d;
-		paused = false;
-		reps = r;
-		count = 0;
-		func = f;
-		values = {...};
+		next = CurTime() + d,
+		paused = false,
+		reps = r,
+		count = 0,
+		func = f,
+		values = {...},
 	};
 
 end, false);
+
+--[[
+
+]]
 
 extension:RegisterFunction("timer", "remove", "s", "", 0, function(ctx, name)
 	local timers = ctx.data.timers;
@@ -69,41 +79,51 @@ extension:RegisterFunction("timer", "resume", "s", "", 0, function(ctx, name)
 	end
 end, false);
 
-hook.Add( "Think", "Expression3.Timers.Run", function( )
+--[[
+
+]]
+
+function runTimers(ctx, tbl)
+	local limit = 100;
 	local now = CurTime();
+	local expired = {};
 
-	for _, ctx in pairs(EXPR_LIB.GetAll()) do
-		if (IsValid(ctx.entity)) then
-			local timers = ctx.data.timers;
+	for k, timer in pairs(tbl) do
 
-			if (timers) then
-				local i = 0;
-				for k, timer in pairs(timers) do
+		limit = limit - 1;
+		if limit <= 0 then break; end
 
-					i = i + 1; -- Limit the amount we do in one think.
+		if ((not timer.paused) and now >= timer.next) then
+			timer.next = now + timer.delay;
 
-					if (i < 50) then
-						if (not timer.paused and now >= timer.next) then
-							timer.next = now + timer.delay;
+			if (timer.reps > 0) then
+				timer.count = timer.count + 1;
 
-							if (timer.reps > 0) then
-								timer.count = timer.count + 1;
-
-								if (timer.count >= timer.reps) then
-									timers[k] = nil;
-								end
-							end
-
-							if (timer.simple) then
-								timers[k] = nil;
-							end
-
-							local where = "timer." .. k;
-							ctx.entity:Invoke(where, "", 0, timer.func, unpack(timer.values));
-						end
-					end
+				if (timer.count >= timer.reps) then
+					expired[#expired + 1] = k;
 				end
 			end
+
+			local where = "timer." .. k;
+
+			print("->",where);
+
+			ctx.entity:Invoke(where, "", 0, timer.func, unpack(timer.values));
+		end
+	end
+
+	for i = 0, #expired do
+		table.remove(tbl, expired[i]);
+	end
+end
+
+hook.Add( "Think", "Expression3.Timers", function( )
+	for _, ctx in pairs( EXPR_LIB.GetAll() ) do
+		if ( IsValid(ctx.entity) ) then
+
+			runTimers(ctx, ctx.data.timers);
+
+			runTimers(ctx, ctx.data.stimers);
 		end
 	end
 end);

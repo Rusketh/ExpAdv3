@@ -10,14 +10,11 @@
 	::Network Extension::
 ]]
 
-if true then return; end --File disabled.
-
 local extension = EXPR_LIB.RegisterExtension("network");
 
 --[[
 
 ]]
-
 
 extension:SetSharedState();
 
@@ -49,8 +46,6 @@ extension:RegisterFunction("net", "writeEntity", "e", "", 0, write, true);
 extension:RegisterFunction("net", "writeInt", "n", "", 0, write, true);
 
 extension:RegisterFunction("net", "writeString", "s", "", 0, write, true);
-
-extension:RegisterFunction("net", "writeTable", "t", "", 0, write, true);
 
 extension:RegisterFunction("net", "writeVector", "v", "", 0, write, true);
 
@@ -174,25 +169,6 @@ extension:RegisterFunction("net", "readString", "", "s", 1, function(context)
 
 end, false);
 
-extension:RegisterFunction("net", "readTable", "", "t", 1, function(context)
-	local buffer = context.data.usermessage_readBuffer;
-
-	if not buffer then return end;
-
-	local i = context.data.usermessage_read or 0;
-
-	local value = buffer[i];
-
-	if ( not istable(value) ) then
-		return;
-	end
-
-	context.data.usermessage_read = i + 1;
-
-	return value;
-
-end, false);
-
 extension:RegisterFunction("net", "readVector", "", "v", 1, function(context)
 	local buffer = context.data.usermessage_readBuffer;
 
@@ -225,11 +201,11 @@ function _sendToPlayer(context, player, name, data)
 end
 
 function _sendToServer(context, name, data)
-	context.entity:SendNetMessage("UserMessage", name, data);
+	context.entity:SendNetMessage("UserMessage", nil, name, data);
 end
 
 function _sendToAll(context, name, data)
-	context.entity:SendNetMessage("UserMessage", name, data);
+	context.entity:SendNetMessage("UserMessage", nil, name, data);
 end
 
 extension:RegisterFunction("net", "send", "p", "", 0, function (context)
@@ -260,7 +236,7 @@ end, false);
 
 extension:SetServerState();
 
-extension:RegisterFunction("net", "broadcast", "p", "", 0, function (context)
+extension:RegisterFunction("net", "broadcast", "", "", 0, function (context)
 	context:AddNetUsage( net.BytesWritten() );
 	
 	local data = context.data.usermessage_buffer;
@@ -273,12 +249,14 @@ end, false);
 
 
 --[[
-	REVEIVE
+	Recieve
 ]]
 
+extension:SetSharedState();
+
 extension:RegisterFunction("net", "recive", "s,f", "", 0, function (context, name, cb)
-	if not context.net_hooks then context.net_hooks = {}; end
-	net_hooks[name] = cb;
+	if not context.data.net_hooks then context.data.net_hooks = {}; end
+	context.data.net_hooks[name] = cb;
 end, false);
 
 EXPR_LIB.AddNetTemplate("UserMessage", "b,...", function(len, from)
@@ -294,10 +272,10 @@ EXPR_LIB.AddNetTemplate("UserMessage", "b,...", function(len, from)
 		if SERVER and IsValid(player) then
 			entity:SendNetMessage( player, "UserMessage", true, unpack(result) );
 		elseif entity.context then
-			if not context.entity.net_hooks then return; end
+			if not context.data.net_hooks then return; end
 			
 			local context = entity.context;
-			local cb = context.entity.net_hooks[result[1]];
+			local cb = context.data.net_hooks[result[1]];
 			if cb == nil then return; end
 
 			context.data.usermessage_readBuffer = result[2];
@@ -307,5 +285,9 @@ EXPR_LIB.AddNetTemplate("UserMessage", "b,...", function(len, from)
 		end
 	end
 end);
+
+--[[
+	Enable Library
+]]
 
 extension:EnableExtension();

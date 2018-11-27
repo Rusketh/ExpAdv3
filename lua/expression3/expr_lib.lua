@@ -600,8 +600,6 @@ function EXPR_LIB.RegisterLibrary(name)
 	lib.constants = {}; -- Future implementation.
 
 	libraries[lib.name] = lib;
-
-	--MsgN("Registered library: ", lib.name);
 end
 
 local functions;
@@ -830,7 +828,7 @@ function Extension.RegisterCastingOperator(this, type, parameter, operator, excl
 end
 
 function Extension.RegisterLibrary(this, name)
-	local entry = {name, name};
+	local entry = {name, this.state};
 	this.libraries[#this.libraries + 1] = entry;
 end
 
@@ -957,6 +955,7 @@ function Extension.EnableExtension(this)
 
 	hook.Add("Expression3.LoadLibraries", "Expression3.Extension." .. this.name, function()
 		for _, v in pairs(this.libraries) do
+			STATE = v[2];
 			this:CheckRegistration(EXPR_LIB.RegisterLibrary, v[1]);
 		end
 	end);

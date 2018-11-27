@@ -43,6 +43,7 @@ end
 	Validate / Set Code
 ]]
 
+--[[
 function ENT:SetCode(script, files, run)
 	self:ShutDown();
 
@@ -91,6 +92,68 @@ function ENT:SetCode(script, files, run)
 	self.validator.start();
 
 	return true;
+end]]
+
+--[[
+	Validation / Set Code
+]]
+
+function ENT:ValidateCode(script, files)
+	local stage1 = EXPR_TOKENIZER.New();
+
+	stage1:Initialize("EXPADV", script);
+
+	local ok, result = stage1:Run();
+
+	if ok then
+		local stage2 = EXPR_PARSER.New();
+
+		stage2:Initialize(result, files);
+
+		ok, result = stage2:Run();
+
+		if ok then
+
+			local stage3 = EXPR_COMPILER.New();
+
+			stage3:Initialize(result, files);
+
+			ok, result = stage3:Run();
+		end
+	end
+
+	return ok, result;
+end
+
+function ENT:SetCode(script, files, run)
+
+	self:ShutDown();
+
+	self.files = files;
+
+	self.script = script;
+
+	local ok, result = self:ValidateCode(script, files);
+
+	if not ok then
+		self:HandelThrown(result);
+		return false;
+	end
+
+	result.build();
+
+	self.nativeScript = result.compiled;
+
+	self:BuildContext(result);
+
+	if (SERVER) then
+		self:SetScriptName(result.directives.name or "generic");
+		self:BuildWiredPorts(result.directives.inport, result.directives.outport);
+	end
+
+	if (run) then
+		self:InitScript();
+	end
 end
 
 --[[
@@ -105,6 +168,8 @@ function ENT:BuildContext(instance)
 	self.context.player = self.player;
 	self.context.traceTable = instance.traceTbl;
 
+	if SERVER then self:SetOwner(self.player); end
+	
 	self:BuildEnv(self.context, instance);
 
 	EXPR_LIB.RegisterContext(self.context);
@@ -288,80 +353,63 @@ end
 --[[
 ]]
 
---[[
-function ENT:WriteToLogger(...)
-	local log, logger = {...}, self.Logger;
-
-	if (not logger) then
-		self.Logger = log;
-		return;
-	end
-
-	for i = 1, #log do
-		logger[#logger + 1] = log[i];
-	end
-end
-
-function ENT:FlushLogger()
-	if (self.Logger and #self.Logger > 0) then
-		self:SendToOwner(true, unpack(self.Logger));
-		self.Logger = nil;
-	end
-end]]
 
 function ENT:PrintStackTrace(stackTrace)
 if (stackTrace and #stackTrace > 0) then
 		self:WriteToLogger("{\n");
 		for level, info in pairs(stackTrace) do
 			if (info.what == "C") then
-				self:SendToOwner(true, string.format( "\t%i: C function\t\"%s\"\n", level, info.name));
+				self:WriteToLogger(string.format( "\t%i: C function\t\"%s\"\n", level, info.name));
 			else
-				self:SendToOwner(true, string.format("\t%i: Line %d\t\"%s\"\t\t%s\n", level, info.currentline, info.name, info.short_src));
+				self:WriteToLogger(string.format("\t%i: Line %d\t\"%s\"\t\t%s\n", level, info.currentline, info.name, info.short_src));
 			end
 		end
-		self:SendToOwner(true, "}\n");
+		self:WriteToLogger("}\n");
 	end
 end
 
 function ENT:HandelThrown(thrown, stackTrace)
-	self:SendToOwner(false, Color(255,0,0), "One of your Expression3 gate's has errored (see golem console).");
+	self:SendToOwner(true, Color(255,0,0), "One of your Expression3 gate's has errored (see golem console).");
 
 	if (not thrown) then
-		self:SendToOwner(true, Color(255,0,0), "Suffered an unkown error (no reason given).");
+		self:WriteToLogger( Color(255,0,0), "Suffered an unkown error (no reason given).");
 		self:PrintStackTrace(stackTrace);
 		self:ShutDown();
 
 	elseif (isstring(thrown)) then
-		self:SendToOwner(true, Color(255,0,0), "Suffered a lua error:\n");
-		self:SendToOwner(true, "    ", Color(0,255, 255), "Error: ", Color(255, 255, 255), thrown);
+		self:WriteToLogger( Color(255,0,0), "Suffered a lua error:\n");
+		self:WriteToLogger( "    ", Color(0,255, 255), "Error: ", Color(255, 255, 255), thrown);
 		self:PrintStackTrace(stackTrace);
 		self:ShutDown();
 
 	elseif (istable(thrown)) then
 		if (thrown.ctx and thrown.ctx ~= self.context) then
-			self:SendToOwner(true, Color(255,0,0), "Suffered a ", thrown.state, " error:\n");
-			self:SendToOwner(true, Color(0,255, 255), "Message: ", Color(255, 255, 255), "Remotly executed function threw an error", "\n");
-			self:SendToOwner(true, Color(0,255, 255), "Thrown error: ", Color(255, 255, 255), thrown.msg, "\n");
+			self:WriteToLogger( Color(255,0,0), "Suffered a ", thrown.state, " error:\n");
+			self:WriteToLogger( Color(0,255, 255), "Message: ", Color(255, 255, 255), "Remotly executed function threw an error", "\n");
+			self:WriteToLogger( Color(0,255, 255), "Thrown error: ", Color(255, 255, 255), thrown.msg, "\n");
 			self:SendToOwner(true, Color(0,255, 255), "External Trace: ", Color(255, 255, 255), "Line ", thrown.line, " Char ", thrown.char, " ", thrown.instruction);
 			self:PrintStackTrace(stackTrace);
 			self:ShutDown();
 
 			if (IsValid(thrown.ctx.entity)) then
-				thrown.ctx.entity:SendToOwner(false, Color(255,0,0), "One of your Expression3 gate's has errored (see golem console).");
-				thrown.ctx.entity:SendToOwner(true, Color(255,0,0), "Suffered a ", thrown.state, " error:\n")
-				thrown.ctx.entity:SendToOwner(true, Color(0,255, 255), "Message: ", Color(255, 255, 255), "A function executed from a remote source threw an error.", "\n")
-				thrown.ctx.entity:SendToOwner(true, Color(0,255, 255), "Thrown error: ", Color(255, 255, 255), thrown.msg, "\n");
-				thrown.ctx.entity:SendToOwner(true, Color(0,255, 255), "At: ", Color(255, 255, 255), "Line ", thrown.line, " Char ", thrown.char, " ", thrown.instruction);
+				thrown.ctx.entity:SendToOwner(true, Color(255,0,0), "One of your Expression3 gate's has errored (see golem console).");
+				thrown.ctx.entity:WriteToLogger( Color(255,0,0), "Suffered a ", thrown.state, " error:\n")
+				thrown.ctx.entity:WriteToLogger( Color(0,255, 255), "Message: ", Color(255, 255, 255), "A function executed from a remote source threw an error.", "\n")
+				thrown.ctx.entity:WriteToLogger( Color(0,255, 255), "Thrown error: ", Color(255, 255, 255), thrown.msg, "\n");
+				thrown.ctx.entity:WriteToLogger( Color(0,255, 255), "At: ", Color(255, 255, 255), "Line ", thrown.line, " Char ", thrown.char, " ", thrown.instruction);
 				thrown.ctx.entity:PrintStackTrace(stackTrace);
 				thrown.ctx.entity:ShutDown();
+				thrown.ctx.entity:FlushLogger();
 			end
 		else
-			self:SendToOwner(true, Color(255,0,0), "Suffered a ", thrown.state, " error:\n")
-			self:SendToOwner(true, "    ", Color(0,255, 255), "Message: ", Color(255, 255, 255), thrown.msg, "\n")
-			self:SendToOwner(true, "    ", Color(0,255, 255), "At: ", Color(255, 255, 255), "Line ", thrown.line, " Char ", thrown.char, " ", thrown.instruction);
+			self:WriteToLogger( Color(255,0,0), "Suffered a ", thrown.state, " error:\n")
+			self:WriteToLogger( "    ", Color(0,255, 255), "Message: ", Color(255, 255, 255), thrown.msg, "\n")
+			self:WriteToLogger( "    ", Color(0,255, 255), "At: ", Color(255, 255, 255), "Line ", thrown.line, " Char ", thrown.char, " ", thrown.instruction);
 			self:ShutDown();
 		end
 	end
+
+	self:FlushLogger();
 end
 
 --[[
