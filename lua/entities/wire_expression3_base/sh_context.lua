@@ -244,6 +244,8 @@ function CONTEXT:AddNetUsage(bytes)
 
 	if not self.inExe then return; end
 
+	if not bytes or bytes <= 0 then return; end
+
 	local value = self.net_total - bytes;
 
 	if ( value < 0 ) then value = 0; end
@@ -256,7 +258,7 @@ end
 --
 
 function CONTEXT:QueuePostExe(func, context, ...)
-	self.post_exe[ #self.post_exe ] = {func, context, ...};
+	self.post_exe[#self.post_exe + 1] = {func, context, ...};
 end
 
 --

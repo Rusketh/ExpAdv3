@@ -555,7 +555,7 @@ function COMPILER.writeArgsToBuffer(this, inst, vargs, ...)
 		local arg = args[i];
 
 		if istable(arg) then
-			local vr = (vargs and i >= vargs) and arg.result ~= "_vr";
+			local vr = (vargs and i > vargs) and arg.result ~= "_vr";
 
 			if (vr) then
 				this:writeToBuffer(inst, "{%q,", arg.result);

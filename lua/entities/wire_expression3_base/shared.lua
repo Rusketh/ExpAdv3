@@ -417,6 +417,7 @@ end
 ]]
 
 function ENT:Invoke(where, result, count, udf, ...)
+
 	if (self:IsRunning()) then
 
 		local optional = string.sub(result, -1) == "*";
@@ -426,6 +427,7 @@ function ENT:Invoke(where, result, count, udf, ...)
 		end
 
 		if (udf and udf.op) then
+
 
 			local r = udf.result;
 			local c = udf.count;

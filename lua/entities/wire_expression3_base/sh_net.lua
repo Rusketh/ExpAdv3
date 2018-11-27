@@ -46,8 +46,6 @@ function ENT:SendNetMessage( player, name, ...)
 	
 	net.Start( "Expression3." .. name );
 
-	print("net message started");
-
 	net.WriteEntity(self);
 
 	net.WriteEntity(player);
@@ -61,15 +59,12 @@ function ENT:SendNetMessage( player, name, ...)
 	end
 
 	if CLIENT then
-		print("Sent to server")
 		net.SendToServer();
 
 	elseif IsValid(player) then
-		print("Sent to player: ", player)
 		net.Send(player);
 
 	else
-		print("Broadcasted")
 		net.Broadcast();
 	end
 
@@ -176,8 +171,6 @@ function ENT:SendToOwner(tochat, ...)
 end
 
 function ENT:SendToPlayer(player, tochat, ...)
-	print("SENDTOPLAYER: ", player, tochat, ...)
-
 	if (SERVER or LocalPlayer() ~= player) then
 		return self:SendNetMessage( player, "SendMessage", chat, ...);
 	elseif ( tochat ) then
@@ -199,22 +192,12 @@ EXPR_LIB.AddNetTemplate("SendMessage", "b,...", function(len, from)
 
 		local result = entity:ReceiveNetWithTemplate("SendMessage");
 
-		PrintTable(result);
-
-		--[[if not player == entity:GetOwner() then
-			print("Player is not entity player")
-			if ( not entity.context ) or ( not entity.context:HasPerm(player, "SendMessage") ) then
-				print("entity does not have player permission")
-				return;
-			end
-		end]]
-
 		if SERVER then
 			entity:SendNetMessage( player, "SendMessage", unpack(result) );
-		elseif net.ReadBit() == 1 then
-			chat.AddText( unpack(result) );
+		elseif result[1] then
+			chat.AddText( unpack(result, 2) );
 		else
-			Golem.Print( unpack(result) );
+			Golem.Print( unpack(result, 2) );
 		end
 	end
 end);

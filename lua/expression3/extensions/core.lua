@@ -287,8 +287,6 @@ ext_core:RegisterFunction("system", "print", "...", "", 0, function(context, ...
 		values[#values + 1] = func_tostring(context, v[1], v[2]);
 	end
 
-	print("system.print", unpack(values));
-	
 	context.entity:SendToOwner(true, unpack(values));
 end);
 

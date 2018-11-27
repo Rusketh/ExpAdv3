@@ -35,19 +35,19 @@ local function write(context, value)
 	b[#b + 1] = value;
 end
 
-extension:RegisterFunction("net", "writeAngle", "a", "", 0, write, true);
+extension:RegisterFunction("net", "writeAngle", "a", "", 0, write, false);
 
-extension:RegisterFunction("net", "writeBool", "b", "", 0, write, true);
+extension:RegisterFunction("net", "writeBool", "b", "", 0, write, false);
 
-extension:RegisterFunction("net", "writeColor", "c", "", 0, write, true);
+extension:RegisterFunction("net", "writeColor", "c", "", 0, write, false);
 
-extension:RegisterFunction("net", "writeEntity", "e", "", 0, write, true);
+extension:RegisterFunction("net", "writeEntity", "e", "", 0, write, false);
 
-extension:RegisterFunction("net", "writeInt", "n", "", 0, write, true);
+extension:RegisterFunction("net", "writeInt", "n", "", 0, write, false);
 
-extension:RegisterFunction("net", "writeString", "s", "", 0, write, true);
+extension:RegisterFunction("net", "writeString", "s", "", 0, write, false);
 
-extension:RegisterFunction("net", "writeVector", "v", "", 0, write, true);
+extension:RegisterFunction("net", "writeVector", "v", "", 0, write, false);
 
 --[[
 	Read
@@ -58,7 +58,7 @@ extension:RegisterFunction("net", "readAngle", "", "a", 1, function(context)
 
 	if not buffer then return end;
 
-	local i = context.data.usermessage_read or 0;
+	local i = context.data.usermessage_read or 1;
 
 	local value = buffer[i];
 
@@ -77,7 +77,7 @@ extension:RegisterFunction("net", "readBool", "", "b", 1, function(context)
 
 	if not buffer then return end;
 
-	local i = context.data.usermessage_read or 0;
+	local i = context.data.usermessage_read or 1;
 
 	local value = buffer[i];
 
@@ -97,7 +97,7 @@ extension:RegisterFunction("net", "readColor", "", "c", 1,  function(context)
 
 	if not buffer then return end;
 
-	local i = context.data.usermessage_read or 0;
+	local i = context.data.usermessage_read or 1;
 
 	local value = buffer[i];
 
@@ -117,7 +117,7 @@ extension:RegisterFunction("net", "readEntity", "", "e", 1, function(context)
 
 	if not buffer then return end;
 
-	local i = context.data.usermessage_read or 0;
+	local i = context.data.usermessage_read or 1;
 
 	local value = buffer[i];
 
@@ -136,7 +136,7 @@ extension:RegisterFunction("net", "readInt", "n", "n", 1, function(context)
 
 	if not buffer then return end;
 
-	local i = context.data.usermessage_read or 0;
+	local i = context.data.usermessage_read or 1;
 
 	local value = buffer[i];
 
@@ -155,7 +155,7 @@ extension:RegisterFunction("net", "readString", "", "s", 1, function(context)
 
 	if not buffer then return end;
 
-	local i = context.data.usermessage_read or 0;
+	local i = context.data.usermessage_read or 1;
 
 	local value = buffer[i];
 
@@ -174,7 +174,7 @@ extension:RegisterFunction("net", "readVector", "", "v", 1, function(context)
 
 	if not buffer then return end;
 
-	local i = context.data.usermessage_read or 0;
+	local i = context.data.usermessage_read or 1;
 
 	local value = buffer[i];
 
@@ -196,18 +196,6 @@ end, false);
 
 extension:SetSharedState();
 
-function _sendToPlayer(context, player, name, data)
-	context.entity:SendNetMessage("UserMessage", player, name, data);
-end
-
-function _sendToServer(context, name, data)
-	context.entity:SendNetMessage("UserMessage", nil, name, data);
-end
-
-function _sendToAll(context, name, data)
-	context.entity:SendNetMessage("UserMessage", nil, name, data);
-end
-
 extension:RegisterFunction("net", "send", "p", "", 0, function (context)
 	context:AddNetUsage( net.BytesWritten() );
 	
@@ -216,7 +204,7 @@ extension:RegisterFunction("net", "send", "p", "", 0, function (context)
 
 	if not data then return; end
 
-	context:QueuePostExe(_sendToPlayer, true, player, name, data);
+	context.entity:SendNetMessage(player, "UserMessage", name, data);
 
 end, false);
 
@@ -230,7 +218,7 @@ extension:RegisterFunction("net", "sendToServer", "p", "", 0, function (context)
 
 	if not data then return; end
 
-	context:QueuePostExe(_sendToServer, true, name, data);
+	context.entity:SendNetMessage(nil, "UserMessage", name, data);
 
 end, false);
 
@@ -244,7 +232,7 @@ extension:RegisterFunction("net", "broadcast", "", "", 0, function (context)
 
 	if not data then return; end
 
-	context:QueuePostExe(_sendToServer, true, name, data);
+	context.entity:SendNetMessage(nil, "UserMessage", name, data);
 end, false);
 
 
@@ -259,11 +247,11 @@ extension:RegisterFunction("net", "recive", "s,f", "", 0, function (context, nam
 	context.data.net_hooks[name] = cb;
 end, false);
 
-EXPR_LIB.AddNetTemplate("UserMessage", "b,...", function(len, from)
+EXPR_LIB.AddNetTemplate("UserMessage", "s,t", function(len, from)
 
-	local entity = net.Readentity();
+	local entity = net.ReadEntity();
 
-	local player = net.ReadPlayer();
+	local player = net.ReadEntity();
 
 	if ( IsValid(entity) and entity.ReceiveNetWithTemplate ) then
 
@@ -271,17 +259,26 @@ EXPR_LIB.AddNetTemplate("UserMessage", "b,...", function(len, from)
 
 		if SERVER and IsValid(player) then
 			entity:SendNetMessage( player, "UserMessage", true, unpack(result) );
-		elseif entity.context then
-			if not context.data.net_hooks then return; end
+			return;
+		end
+
+		local context = entity.context;
+
+		if entity.context then
 			
 			local context = entity.context;
+
+			if not context.data.net_hooks then return; end
+
 			local cb = context.data.net_hooks[result[1]];
+
 			if cb == nil then return; end
 
 			context.data.usermessage_readBuffer = result[2];
-			context.data.usermessage_read = 0; 
 
-			entity:Invoke("net<" .. result[2] .. ">", "", 0, cb);
+			context.data.usermessage_read = 1; 
+
+			entity:Invoke("net<" .. result[1] .. ">", "", 0, cb);
 		end
 	end
 end);
