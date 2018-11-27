@@ -242,7 +242,7 @@ end, false);
 
 extension:SetSharedState();
 
-extension:RegisterFunction("net", "recive", "s,f", "", 0, function (context, name, cb)
+extension:RegisterFunction("net", "receive", "s,f", "", 0, function (context, name, cb)
 	if not context.data.net_hooks then context.data.net_hooks = {}; end
 	context.data.net_hooks[name] = cb;
 end, false);

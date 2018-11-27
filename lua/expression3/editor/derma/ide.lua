@@ -16,6 +16,62 @@ local SetSize = debug.getregistry( ).Panel.SetSize
 
 local PANEL = { }
 
+local sWelcomeTab = [[
+/*
+    Welcome to the Expression Advanced Three, beta.
+    This project is a huge work in progress, there are bugs.
+        To report bugs, https://github.com/Rusketh/ExpAdv3/issues
+    
+    To get you started we have crafted this quick and simple welcome screen.
+    
+    We recomend you read this thing before you get started.
+    
+    The editor is weird please get used to it.
+        Save/Open is bottom right.
+        There is a helper, is top right.
+        Find and replace is under the helper button,
+            (You can also do CTR+F / CTRL+H).
+            
+    Directives now use quoted strings.
+*/
+
+@name "Welcome Tab";
+
+//   Variables are not cammelcased but require class deceleration.
+
+int var = 21;
+
+/*
+    Classes use constructors, this uses the new keyword.
+*/
+
+table egTable = new table();
+
+//   Get and set are the same as in e2.
+
+egTable[1, int] = var * 2;
+
+/*
+    All functions are held on libraries such as the system library.
+*/
+
+system.print("A:" + egTable[1, int]);
+
+//   Methods are differnt it is object.method and not object:method like in e2.
+
+vector vec = new vector(10, 20, 30);
+
+vec.setZ(var)
+
+/*
+    Your inventory now contains a console, you can reach this with system.out(...);
+    
+    There is a bunch more help with examples in the helper.
+    
+    Click the new tab icon to get started.
+*/
+]];
+
 local sDefaultGateTab = [[
 @name "Generic Gate";
 
@@ -54,16 +110,16 @@ server {
 		if (port == "E3") {
 			@input entity E3;
 			gate = E3;
-			stream bf = net.start("E3");
-			bf.writeShort(E3.id());
-			net.sendToClients(bf);
+			net.start("E3");
+			net.writeEntity();
+			net.broadcast();
 		}
 	});
 }
 
 client {
-	net.receive("E3", function(stream bf) {
-		gate = new entity(bf.readShort());
+	net.receive("E3", function() {
+		gate = new net.readEntity();
 	});
 
 	event.add("RenderScreen", "Render", function(int w, int h) {
@@ -266,6 +322,7 @@ function PANEL:Init( )
 	self.pnlConsoleDivider:SetTopMin( 200 )
 	self.pnlConsoleDivider:SetBottomMin( 50 )
 
+	self:NewTab( "editor", sWelcomeTab, "", "Welcome" )
 
 	Golem.Syntax:Create( "console", self.tbConsoleEditor )
 	--[[Golem.Syntax:Create( "Console", self.tbConsoleEditor )
