@@ -1645,7 +1645,7 @@ function PARSER.Expression_22(this)
 
 		this:Require("var", "Gobal variable expected after delta operator ($)")
 
-		return this:EndInstruction(inst);
+		return this:EndInstruction(inst, {var = this.__token.data});
 	end
 
 	if (this:Accept("cng")) then
@@ -1655,7 +1655,7 @@ function PARSER.Expression_22(this)
 
 		this:Require("var", "Gobal variable expected after changed operator (~)")
 
-		return this:EndInstruction(inst);
+		return this:EndInstruction(inst, {var = this.__token.data});
 	end
 
 	return this:Expression_23();
