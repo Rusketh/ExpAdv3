@@ -1075,8 +1075,8 @@ end
 function PANEL:MakeSelection( selection )
 	local start, stop = selection[1], selection[2]
 	
-	if start.x > #self.Rows then start.x = #self.Rows end 
-	if stop.x > #self.Rows then stop.x = #self.Rows end 
+	if start.x > #self.tRows then start.x = #self.tRows end 
+	if stop.x > #self.tRows then stop.x = #self.tRows end 
 	if start.x < 1 then start.x = 1 end 
 	if stop.x < 1 then stop.x = 1 end 
 	

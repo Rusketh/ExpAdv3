@@ -227,6 +227,63 @@ function ENT:FlushLogger()
 end
 
 --[[
+	Permissions
+]]
+
+function ENT:SetPerm(player, perm, value)
+	if (not self.permission_table) then
+		self.permission_table = {};
+	end
+
+	local id = player:AccountID();
+	local permissions = self.permission_table[id];
+
+	if (not permissions) then
+		permissions = { };
+		self.permission_table[id] = permissions;
+	end
+
+	permissions[perm] = value;
+
+	if SERVER then
+		self:SendNetMessage(nil, "SetPermission", player, perm or "", value or false);
+	end
+end
+
+function ENT:HasPerm(player, perm)
+	if (not self.permission_table) then return false; end
+
+	if (not IsValid(player)) then return false; end
+
+	if (self.player == player) then return true; end
+
+	local id = player:AccountID();
+	local permissions = self.permission_table[id];
+
+	if (not permissions) then return false; end
+
+	return permissions[perm] or false;
+end
+
+function ENT:CanUseEntity(entity)
+	local owner;
+
+	if (entity.CPPIGetOwner) then
+		owner = entity:CPPIGetOwner();
+	end
+
+	if (not owner) and (entity.GetPlayer) then
+		owner = entity:GetPlayer();
+	end
+
+	return self:HasPerm(owner, "Prop-Control");
+end
+
+
+
+
+
+--[[
 	Uploading
 ]]
 

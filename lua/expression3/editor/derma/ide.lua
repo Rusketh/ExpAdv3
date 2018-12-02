@@ -353,6 +353,24 @@ function PANEL:Init( )
 		self.Options = nil
 	end )
 
+	self:AddCustomTab( false, "options2", function( self )
+		if self.Options2 then
+			self.pnlSideTabHolder:SetActiveTab( self.Options2.Tab )
+			self.Options2.Panel:RequestFocus( )
+			return self.Options2
+		end
+
+		local Panel = vgui.Create( "GOLEM_Options2" )
+		local Sheet = self.pnlSideTabHolder:AddSheet( "", Panel, "fugue/gear.png", function(pnl) self:CloseMenuTab( pnl:GetParent( ), true ) end )
+		self.pnlSideTabHolder:SetActiveTab( Sheet.Tab )
+		self.Options2 = Sheet
+		Sheet.Panel:RequestFocus( )
+
+		return Sheet
+	end, function( self )
+		self.Options2 = nil
+	end )
+
 	self:AddCustomTab( false, "wiki", function( self )
 		if self.Wiki then
 			self.pnlSideTabHolder:SetActiveTab( self.Wiki.Tab )
@@ -382,6 +400,8 @@ function PANEL:Init( )
 	self.pnlSearch:Close(true);
 
 	self:NewMenuTab( "options" )
+
+	self:NewMenuTab( "options2" )
 
 	Golem.Font.OnFontChange = function( Font, sFontID )
 		for i = 1, #self.pnlTabHolder.Items do

@@ -66,6 +66,7 @@ if (SERVER) then
 	AddCSLuaFile( "expression3/editor/derma/ide.lua" );
 	AddCSLuaFile( "expression3/editor/derma/imagebutton.lua" );
 	AddCSLuaFile( "expression3/editor/derma/options.lua" );
+	AddCSLuaFile( "expression3/editor/derma/setting.lua" );
 	AddCSLuaFile( "expression3/editor/derma/propertysheet.lua" );
 	AddCSLuaFile( "expression3/editor/derma/toolbar.lua" );
 	AddCSLuaFile( "expression3/editor/derma/filemenu.lua" );
