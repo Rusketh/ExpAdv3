@@ -113,43 +113,18 @@ end
 ]]
 
 function CONTEXT:SetPerm(player, perm, value)
-	local id = player:AccountID();
-	local perms = self.perms[id];
-
-	if (not perms) then
-		perms = { };
-		self.perms[id] = perms;
-	end
-
-	perms[perm] = value;
+	if IsValid(self.entity) then return self.entity:SetPerm(player, perm, value); end
+	return false;
 end
 
 function CONTEXT:HasPerm(player, perm)
-	if not IsValid(player) then return false; end
-	if (self.player == player) then return true; end
-
-	local id = player:AccountID();
-	local perms = self.perms[id];
-
-	if (not perms) then return false; end
-
-	return perms[perm] or false;
+	if IsValid(self.entity) then return self.entity:HasPerm(player, perm); end
+	return false;
 end
 
 function CONTEXT:CanUseEntity(entity)
-	local owner;
-
-	if (entity.CPPIGetOwner) then
-		owner = entity:CPPIGetOwner();
-	end
-
-	if (not owner) and (entity.GetPlayer) then
-		owner = entity:GetPlayer();
-	end
-
-	if (not owner) then return false; end
-
-	return self:HasPerm(owner, "Prop-Control");
+	if IsValid(self.entity) then return self.entity:CanUseEntity(entity); end
+	return false;
 end
 
 function EXPR_LIB.SetPermissionsForEntity(entity, player, perm, value)
