@@ -378,6 +378,15 @@ function SEARCH:DoFindReplace(result, noPrint)
 
 	if (self.bReplace) then
 		local with = self:GetReplacement();
+		local bAllowRegex = self.pEditor.searchOptRegex:GetValue();
+
+		if bAllowRegex then
+			local matches = { string.match(result[3], self:GetQuery()) };
+
+			for i, match in pairs(matches) do
+				with = string.gsub(with, "$" .. i, match);
+			end
+		end
 
 		ide:SetArea( { ide:MakeSelection({ result[1], result[2] }) }, with);
 
