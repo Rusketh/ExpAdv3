@@ -322,7 +322,7 @@ function PANEL:Init( )
 	self.pnlConsoleDivider:SetTopMin( 200 )
 	self.pnlConsoleDivider:SetBottomMin( 50 )
 
-	self:NewTab( "editor", sWelcomeTab, "", "Welcome" )
+	self:NewTab( "editor", sWelcomeTab, nil, "Welcome" )
 
 	Golem.Syntax:Create( "console", self.tbConsoleEditor )
 	--[[Golem.Syntax:Create( "Console", self.tbConsoleEditor )

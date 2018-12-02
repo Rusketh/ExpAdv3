@@ -1072,31 +1072,19 @@ function PANEL:SetSelection( text )
 	self:SetCaret( self:SetArea( self:Selection( ), text ) )
 end
 
-local function MakeSel( start, stop )
+function PANEL:MakeSelection( selection )
+	local start, stop = selection[1], selection[2]
+	
+	if start.x > #self.Rows then start.x = #self.Rows end 
+	if stop.x > #self.Rows then stop.x = #self.Rows end 
+	if start.x < 1 then start.x = 1 end 
+	if stop.x < 1 then stop.x = 1 end 
+	
 	if start.x > stop.x or ( start.x == stop.x and start.y > stop.y ) then
 		return stop, start
 	else
 		return start, stop
 	end
-end
-
-function PANEL:MakeSelection( selection )
-
-	local start, stop = MakeSel( selection[1], selection[2] )
-
-	-- Should i do this?
-	/*
-	if istable( self.tRows[start.x] ) then
-		start = Vector2( self.tRows[start.x].Primary, #self.tRows[self.tRows[start.x].Primary][1] )
-	end
-
-	if istable( self.tRows[stop.x] ) then
-		local x = self.tRows[start.x].Primary
-		stop = Vector2( self.tRows[x][#self.tRows[x]], 1 )
-	end
-	*/
-
-	return start, stop
 end
 
 function PANEL:SelectAll( )
