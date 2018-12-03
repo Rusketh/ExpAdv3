@@ -101,7 +101,7 @@ function BASE:SetUpFromTable(tbl)
 	end
 end
 
-vgui.Register( "GOLEM_Setting", BASE, "DPanel" );
+vgui.Register( "GOLEM_Setting", BASE, "EditablePanel" );
 
 --[[
 	On and Off.
@@ -254,8 +254,12 @@ function EXPAND:CreateMenu(height, openIcon, closeIcon)
 	self:HideMenu();
 
 	self.pnlMenu.Think = function()
-		if self:IsOpen() and not self:AllParentsVisible() then
-			self:HideMenu();
+		if self:IsOpen() then
+			if not self:AllParentsVisible() then
+				self:HideMenu();
+			else
+				self:RepositionMenu();
+			end
 		end
 	end;
 
@@ -272,13 +276,9 @@ function EXPAND:AddItem(item)
 	end
 end
 
-function EXPAND:ShowMenu()
+function EXPAND:RepositionMenu()
 	local canvas = self:GetCanvas();
 	local menu = self:GetMenu();
-
-	if not menu then return; end
-
-	self.btnIcon:SetMaterial(self:GetCloseIcon());
 
 	local x, y = self:LocalToScreen(canvas:GetPos());
 	local w, h = canvas:GetSize();
@@ -290,13 +290,26 @@ function EXPAND:ShowMenu()
 		y = y - t;
 	end
 
-	menu:SetVisible(true);
-
-	menu:MakePopup();
-
 	menu:SetPos(x, y);
 
+	menu:MakePopup();
+end
+
+function EXPAND:ShowMenu()
+	self.btnIcon:SetMaterial(self:GetCloseIcon());
+
+	local canvas = self:GetCanvas();
+	local menu = self:GetMenu();
+
+	if not menu then return; end
+
+	local w, h = canvas:GetSize();
+
+	menu:SetVisible(true);
+
 	menu:SetWide(w);
+
+	self:RepositionMenu();
 
 	self.m_bOpen = true;
 
@@ -348,14 +361,6 @@ local mColor = Material("materials/fugue/spectrum-absorption.png");
 
 function WHEEL:Init()
 	local canvas = self:GetCanvas();
-
-	canvas.DoClick = function()
-		if self:IsOpen() then
-			bNoSave = true;
-				self:HideMenu();
-			bNoSave = false;
-		end
-	end;
 
 	canvas.Paint = function(_, w, h)
 		local open = self:IsOpen();
