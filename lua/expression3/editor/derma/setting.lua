@@ -1,3 +1,215 @@
+
+local WHEELRGB = { };
+
+AccessorFunc( WHEELRGB, "AlterSaturation", "AlteringSaturation", FORCE_BOOL );
+AccessorFunc( WHEELRGB, "AlterColor", "AlteringColor", FORCE_BOOL );
+
+AccessorFunc( WHEELRGB, "MinSaturation", "MinSaturation", FORCE_INT );
+AccessorFunc( WHEELRGB, "MaxSaturation", "MaxSaturation", FORCE_INT );
+
+AccessorFunc( WHEELRGB, "SliderMin", "SliderMin", FORCE_INT );
+AccessorFunc( WHEELRGB, "SliderMax", "SliderMax", FORCE_INT );
+
+function WHEELRGB:Init()
+
+	self:CreateSlider();
+	self:CreatePicker();
+
+	self:SetSize(255, 255);
+
+	self:SetSliderMin(0);
+	self:SetSliderMax(math.pi / 2);
+
+	self:SetMinSaturation(0.5);
+	self:SetMaxSaturation(1);
+	
+	self:SetColor(255, 255, 255);
+end
+
+function WHEELRGB:CreateSlider()
+	self.SatNob = self:Add("DButton");
+	self.SatNob:SetText( "" );
+	self.SatNob:SetSize( 15, 15 );
+
+	self.SatNob.Paint = function( panel, w, h )
+		derma.SkinHook( "Paint", "SliderKnob", panel, w, h );
+	end
+
+	self.SatNob.OnMousePressed = function( panel )
+		self:SetAlteringSaturation( true );
+		self:MouseCapture( true );
+	end
+
+	self.SatNob.OnMouseReleased = function( panel )
+		self:SetAlteringSaturation( false );
+		self:MouseCapture( false );
+	end
+
+	self.SatNob.OnCursorMoved = function( panel, x, y )
+		local x, y = panel:LocalToScreen( x, y );
+		x, y = self:ScreenToLocal( x, y );
+		self:OnCursorMoved( x, y );
+	end
+end
+
+function WHEELRGB:CreatePicker()
+	self.ColNob = self:Add("DButton");
+	self.ColNob:SetText( "" );
+	self.ColNob:SetSize( 15, 15 );
+
+	self.ColNob.Paint = function( panel, w, h )
+		derma.SkinHook( "Paint", "SliderKnob", panel, w, h );
+	end
+
+	self.ColNob.OnMousePressed = function( panel )
+		self:SetAlteringColor( true )
+		self:MouseCapture( true )
+
+		local x, y = panel:LocalToScreen( x, y );
+		x, y = self:ScreenToLocal( x, y );
+		self:OnCursorMoved( x, y );
+	end
+
+	self.ColNob.OnMouseReleased = function( panel )
+		self:SetAlteringColor( false )
+		self:MouseCapture( false )
+	end
+
+	self.ColNob.OnCursorMoved = function( panel, x, y )
+		local x, y = panel:LocalToScreen( x, y );
+		x, y = self:ScreenToLocal( x, y );
+		self:OnCursorMoved( x, y );
+	end
+end
+
+function WHEELRGB:GetRadius()
+	local w, h = self:GetSize();
+	return ((w < h) and w or h) * 0.5;
+end
+
+function WHEELRGB:ColorFromPixel(x, y)
+	local radius = self:GetRadius();
+
+	x = x - radius;
+	y = y - radius;
+
+	local angle = math.atan2(x, y);
+	local ratio = math.sqrt((radius ^ 2) * 2);
+	local distance = math.sqrt(x ^ 2 + y ^ 2);
+
+	if math.abs(distance) <= radius then
+		return HSVToColor(math.deg(angle), distance/ratio, self:GetSaturation());
+	end
+end
+
+function WHEELRGB:GetColor()
+	return self.Value;
+end
+
+function WHEELRGB:SetColor(color)
+	local h, v, s = ColorToHSV(color);
+
+	local radius = self:GetRadius();
+	local ratio = math.sqrt((radius ^ 2) * 2);
+
+	local distance = v * ratio;
+	local angle = math.rad(h);
+
+	local x = (math.cos(angle) * distance) - radius;
+	local y = (math.sin(angle) * distance) - radius;
+
+	self.Value = color;
+
+	self.ColNob:SetPos(x, y);
+
+	self:SetSaturation(s);
+end
+
+function WHEELRGB:Paint(w, h)
+	for x = 1, w do
+		for y = 1, h do
+			local pxlc = self:ColorFromPixel(x, y);
+
+			if pxlc then
+				surface.SetDrawColor(pxlc);
+
+				surface.DrawRect(x, y, 1, 1);
+			end
+		end
+	end
+end
+
+function WHEELRGB:PerformLayout()
+	self:SetSaturation(self.Saturation or 1)
+end
+
+function WHEELRGB:GetSaturation()
+	return self.Saturation or 1;
+end
+
+function WHEELRGB:SetSaturation(value)
+	local radius = self:GetRadius();
+	local min = self:GetMinSaturation();
+	local max = self:GetMaxSaturation();
+
+	self.Saturation = math.Clamp(value, min, max);
+
+	local angle = math.Remap(self.Saturation, min, max, self:GetSliderMin(), self:GetSliderMax());
+
+	local newX = radius + (math.cos(angle) * (radius - 5));
+	local newY = radius + (math.sin(angle) * (radius - 5));
+
+	self.SatNob:SetPos(newX, newY);
+end
+
+function WHEELRGB:OnCursorMoved(x, y)
+	if self:GetAlteringSaturation() then
+		local radius = self:GetRadius();
+		local angle = math.atan2(y - radius, x - radius);
+
+		--angle = math.Clamp(angle, self:GetSliderMin(), self:GetSliderMax());
+
+		self:SetSaturation( math.Remap( angle, self:GetSliderMin(), self:GetSliderMax(), self:GetMinSaturation(), self:GetMaxSaturation() ) );
+		return;
+	end
+
+	if self:GetAlteringColor() then
+		local col = self:ColorFromPixel(x, y);
+
+		if col then
+			self.Value = col;
+			self.ColNob:SetPos(x, y);
+		end
+	end
+end
+
+function WHEELRGB:OnMousePressed()
+	if self:GetAlteringSaturation() then
+		self:OnCursorMoved(self:CursorPos());
+		self:SetAlteringSaturation(false);
+		return;
+	end
+
+	self:SetAlteringColor(true);
+	self:OnCursorMoved(self:CursorPos());
+end
+
+function WHEELRGB:OnMouseReleased()
+	if self:GetAlteringSaturation() then
+		self:OnCursorMoved(self:CursorPos());
+		self:SetAlteringSaturation(false);
+		return;
+	end
+
+	if self:GetAlteringColor() then
+		self:OnCursorMoved(self:CursorPos());
+		self:SetAlteringColor(false);
+		return;
+	end 
+end
+
+vgui.Register( "DColorWheelPanel", WHEELRGB, "EditablePanel" );
+
 --[[
 	Golem need a decent options menu.
 	So lets get rocky to rumble.
@@ -247,7 +459,7 @@ function EXPAND:CreateMenu(height, openIcon, closeIcon)
 	local canvas = self:GetCanvas();
 
 	self.pnlMenu = vgui.Create("DScrollPanel")
-	self.pnlMenu:SetTall(height);
+	self.pnlMenu:SetTall(height or self:GetWide());
 
 	self:SetOpenIcon(openIcon or mOpen);
 	self:SetCloseIcon(closeIcon or mClose);
@@ -398,8 +610,9 @@ function WHEEL:SetUp(name, height, openIcon, closeIcon, saveIcon)
 
 	local menu = self:CreateMenu(height or 300, openIcon or mColor, closeIcon or mDisk);
 
-	self.colorPicker = menu:Add("DColorCombo");
-	self.colorPicker:Dock(FILL);
+	self.colorPicker = menu:Add("DColorWheelPanel"); --"DColorCombo");
+	self.colorPicker:SetSize(200, 200);
+	self.colorPicker:Dock(LEFT); --FILL);
 
 	self:SetValue(Color(255, 255, 255), true);
 end
@@ -411,6 +624,9 @@ function WHEEL:ValueChanged(value, old)
 end
 
 vgui.Register( "GOLEM_Setting_Color", WHEEL, "GOLEM_Setting_Expandable" );
+
+
+
 
 --[[
 	Golem Settings Menu v2.0
