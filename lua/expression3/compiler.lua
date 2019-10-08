@@ -2550,7 +2550,7 @@ function COMPILER.Compile_NEW(this, inst, token, data)
 	local signature = string_format("%s(%s)", name(data.class), names(ids));
 
 	if (op and userclass) then
-		this:writeToBuffer(inst, "[%q](", op);
+		this:writeToBuffer(inst, "%s[%q](", cls.name, op);
 
 		for k, expr in pairs(data.expressions) do
 			this:addInstructionToBuffer(inst, expr);
@@ -3935,7 +3935,7 @@ function COMPILER.Compile_CONSTCLASS(this, inst, token, data)
 	userclass.valid = true;
 	userclass.constructors[signature] = signature;
 
-	this:writeToBuffer(inst, "\nlocal this = setmetatable({vars = setmetatable({}, %s.vars)}, %s)\n", userclass.name, userclass.name);
+	this:writeToBuffer(inst, "\nlocal this = setmetatable({vars = setmetatable({}, %s.vars), hash = %q}, %s)\n", userclass.name, userclass.hash, userclass.name);
 
 	if data.block then
 		this:Compile(data.block);
@@ -3947,6 +3947,19 @@ function COMPILER.Compile_CONSTCLASS(this, inst, token, data)
 	this:writeToBuffer(inst, "\nreturn this;\nend\n");
 
 	return nil, nil, EXPR_LOW;
+end
+
+function COMPILER.Compile_SUPCONST(this, inst, token, data)
+	local class = this:GetOption("userclass");
+	
+	if (not class.extends) then
+		this:Throw(inst, "class %s does not extend a class", class.name)
+	end
+
+	data.class = class.extends.name;
+
+	this:writeToBuffer(inst, "this = ");
+	return COMPILER.Compile_NEW(this, inst, token, data);
 end
 
 function COMPILER.Compile_DEF_METHOD(this, inst, token, data)
@@ -3982,10 +3995,11 @@ function COMPILER.Compile_DEF_METHOD(this, inst, token, data)
 
 
 	local meth = {};
-	meth.sig = signature;
+	meth.signature = signature;
 	meth.name = data.var.data;
 	meth.result = data.type.data;
 	meth.token = token;
+	meth.price = 0;
 	userclass.methods[signature] = meth;
 
 	this:SetOption("udf", (this:GetOption("udf") or 0) + 1);
@@ -3994,7 +4008,10 @@ function COMPILER.Compile_DEF_METHOD(this, inst, token, data)
 	this:SetOption("retunClass", meth.result);
 	this:SetOption("retunCount", meth.result ~= "" and -1 or 0);
 
-	this:Compile(data.block);
+	local _, __, blockprice = this:Compile(data.block);
+	
+	meth.price = blockprice;
+
 	this:addInstructionToBuffer(inst, data.block);
 
 	local count = this:GetOption("retunCount");
@@ -4020,7 +4037,7 @@ function COMPILER.Compile_DEF_METHOD(this, inst, token, data)
 	return nil, nil, EXPR_LOW;
 end
 
-function COMPILER.Compile_TOSTR(this, inst, token, expressions)
+function COMPILER.Compile_TOSTR(this, inst, token, data)
 	local userclass = this:GetOption("userclass");
 
 	this:PushScope();
@@ -4033,13 +4050,13 @@ function COMPILER.Compile_TOSTR(this, inst, token, expressions)
 	this:SetOption("retunClass", "s");
 	this:SetOption("retunCount", 1);
 
-	this:writeToBuffer(inst, "\n%s.__tostring = function(this)\n");
+	this:writeToBuffer(inst, "\n%s.__tostring = function(this)\n", userclass.name);
 
-	local error = string_format("Attempt to call user method '%s.%s(%s)' using alien class of the same name.", userclass.name, data.__name.data, data.signature);
+	local error = string_format("Attempt to call user operator '%s.tostring()' using alien class of the same name.", userclass.name);
 	this:writeToBuffer(inst, "if(not CheckHash(%q, this)) then CONTEXT:Throw(%q); end", userclass.hash, error);
 
 	this:Compile(data.block);
-	this:writeToBuffer(data.block)
+	this:writeToBuffer(inst, data.block)
 	this:PopScope();
 
 	this:writeToBuffer(inst, "\nend\n");
