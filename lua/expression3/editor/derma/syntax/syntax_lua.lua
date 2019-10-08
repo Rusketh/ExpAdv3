@@ -70,7 +70,7 @@ function Syntax:FindValidLines( tLines )
 				ValidLines[#ValidLines+1] = { { Row, Char }, { Row, #Line + 1 } }
 				break
 			elseif Text == "/" then -- Test for comments
-				if Line[Char+1] == "/" then -- Single line comment (//)
+				if Line[Char+1] == "/" then -- Single line comment (--)
 					ValidLines[#ValidLines+1] = { { Row, Char }, { Row, #Line + 1 } }
 					break
 				elseif Line[Char+1] == "*" then -- Multi line comment (/*)
@@ -95,10 +95,8 @@ function Syntax:FindValidLines( tLines )
 			end
 
 			if tStart[1] == tEnd[1] then
-				if tStart[1] == nLine then
-			 		if tStart[2] <= nStart and tEnd[2] >= nStart then
-			 			return false
-			 		end
+				if tStart[1] == nLine and tStart[2] <= nStart and tEnd[2] >= nStart then
+			 		return false
 			 	end
 			else
 			 	if tStart[1] == nLine then
@@ -117,7 +115,7 @@ function Syntax:FindValidLines( tLines )
 	end, ValidLines
 end
 
-// { FoldLevel, Folded, FoldOverride }
+-- { FoldLevel, Folded, FoldOverride }
 function Syntax:MakeFoldData( nExit )
 	local LinesToFold = self.dEditor:ExpandAll( )
 	local ValidLines = self:FindValidLines( )
@@ -282,7 +280,6 @@ function Syntax:Format( Code )
 	local lines = string.Explode( "\n", Code )
 	local ValidLine, Lookup = self:FindValidLines( lines )
 	local indent = 0
-	local line = 1
 	local newline = false
 
 	local i = 0
@@ -699,7 +696,7 @@ function Syntax:Parse( )
 						self:NextCharacter( )
 					end
 					self:AddToken( "comment" )
-				elseif self.sChar == "/" then -- Single line comment type //
+				elseif self.sChar == "/" then -- Single line comment type --
 					self:NextPattern( ".*" )
 					self:AddToken( "comment" )
 				else
@@ -707,8 +704,8 @@ function Syntax:Parse( )
 				end
 			else
 				local exit = false
-				for i = 1, #operators do
-					if self:NextPattern( operators[i] ) then
+				for n = 1, #operators do
+					if self:NextPattern( operators[n] ) then
 						self:AddToken( "operator" )
 						exit = true
 						break

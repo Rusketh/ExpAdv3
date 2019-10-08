@@ -379,10 +379,8 @@ function PANEL:BuildPathBar( Parent )
 			Path = Path:sub( 1, #Path - 1 )
 		end
 
-		if string.StartWith( Path, "golem" ) then
-			if file.IsDir( Path, "DATA" ) then
-				self:OpenFolder( Path )
-			end
+		if string.StartWith( Path, "golem" ) and file.IsDir( Path, "DATA" ) then
+			self:OpenFolder( Path )
 		end
 	end
 

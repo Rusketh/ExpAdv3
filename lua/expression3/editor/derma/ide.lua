@@ -3,7 +3,7 @@ Name: GOLEM_IDE
 Author: Oskar
 ============================================================================================================================================*/
 
-local ValidPanel = ValidPanel
+local IsValid = IsValid
 local surface = surface
 local gui = gui
 local math = math
@@ -20,24 +20,24 @@ local sWelcomeTab = [[
 /*
     Welcome to the Expression Advanced Three, beta.
     This project is a huge work in progress, there are bugs.
-        To report bugs, https://github.com/Rusketh/ExpAdv3/issues
-    
+        To report bugs, https:--github.com/Rusketh/ExpAdv3/issues
+
     To get you started we have crafted this quick and simple welcome screen.
-    
+
     We recomend you read this thing before you get started.
-    
+
     The editor is weird please get used to it.
         Save/Open is bottom right.
         There is a helper, is top right.
         Find and replace is under the helper button,
             (You can also do CTR+F / CTRL+H).
-            
+
     Directives now use quoted strings.
 */
 
 @name "Welcome Tab";
 
-//   Variables are not cammelcased but require class deceleration.
+--   Variables are not cammelcased but require class deceleration.
 
 int var = 21;
 
@@ -47,7 +47,7 @@ int var = 21;
 
 table egTable = new table();
 
-//   Get and set are the same as in e2.
+--   Get and set are the same as in e2.
 
 egTable[1, int] = var * 2;
 
@@ -57,7 +57,7 @@ egTable[1, int] = var * 2;
 
 system.print("A:" + egTable[1, int]);
 
-//   Methods are differnt it is object.method and not object:method like in e2.
+--   Methods are differnt it is object.method and not object:method like in e2.
 
 vector vec = new vector(10, 20, 30);
 
@@ -65,9 +65,9 @@ vec.setZ(var)
 
 /*
     Your inventory now contains a console, you can reach this with system.out(...);
-    
+
     There is a bunch more help with examples in the helper.
-    
+
     Click the new tab icon to get started.
 */
 ]];
@@ -77,7 +77,7 @@ local sDefaultGateTab = [[
 
 /*
 	Generic Gate Code.
-	Wiki: https://github.com/Rusketh/ExpAdv3/wiki or [?].
+	Wiki: https:--github.com/Rusketh/ExpAdv3/wiki or [?].
 */
 
 function void Main() {
@@ -85,7 +85,7 @@ function void Main() {
 }
 
 function void Loop() {
-	//Same as RunOnTick;
+	--Same as RunOnTick;
 }
 
 event.add("Think", "Loop", Loop);
@@ -100,7 +100,7 @@ local sDefaultScreenTab = [[
 	This code uses another E3-Gates Screen events,
 	providing an additonal parameter for the screens entity.
 
-	Wiki: https://github.com/Rusketh/ExpAdv3/wiki or [?].
+	Wiki: https:--github.com/Rusketh/ExpAdv3/wiki or [?].
 */
 
 entity gate = new entity(0);
@@ -166,7 +166,7 @@ function PANEL:Init( )
 	self:SetMinWidth( 800 )
 	self:SetMinHeight( 600 )
 	self:SetScreenLock( true )
-	self:SetKeyBoardInputEnabled( true )
+	self:SetKeyboardInputEnabled( true )
 	self:SetMouseInputEnabled( true )
 
 	self.pImage = vgui.Create( "DImage", self )
@@ -325,15 +325,15 @@ function PANEL:Init( )
 	self:NewTab( "editor", sWelcomeTab, nil, "Welcome" )
 
 	Golem.Syntax:Create( "console", self.tbConsoleEditor )
-	--[[Golem.Syntax:Create( "Console", self.tbConsoleEditor )
+	/*Golem.Syntax:Create( "Console", self.tbConsoleEditor )
 	self.tbConsoleEditor.tbConsoleRows = { }
 
 	self:AddPrintOut( Color(255, 255, 0), "Expression 3 Console Initialized:" )
-	]]
+	*/
 
 	hook.Run( "Expression3.AddGolemTabTypes", self )
 
-	//self:AddCustomTab( bScope, sName, fCreate, fClose )
+	--self:AddCustomTab( bScope, sName, fCreate, fClose )
 
 	self:AddCustomTab( false, "options", function( self )
 		if self.Options then
@@ -405,7 +405,7 @@ function PANEL:Init( )
 
 	Golem.Font.OnFontChange = function( Font, sFontID )
 		for i = 1, #self.pnlTabHolder.Items do
-			if not self.pnlTabHolder.Items[i].Tab.__type == "editor" then continue end
+			if self.pnlTabHolder.Items[i].Tab.__type ~= "editor" then continue end
 			self.pnlTabHolder.Items[i].Panel:SetFont( sFontID )
 		end
 		self.tbConsoleEditor:SetFont( sFontID )
@@ -560,10 +560,10 @@ function PANEL:NewTab( sType, ... )
 		end
 
 		Editor.OnTextChanged = function( tSelection, sText )
-			timer.Destroy( "Golem_autosave" )
+			timer.Remove( "Golem_autosave" )
 			timer.Create( "Golem_autosave", 0.5, 1, function( )
 				local Tab = Sheet.Tab
-				if not ValidPanel( Tab ) or Tab.__type ~= "editor" or not Tab.__shouldsave then return end
+				if not IsValid( Tab ) or Tab.__type ~= "editor" or not Tab.__shouldsave then return end
 				local sCode = Tab:GetPanel( ):GetCode( )
 				local sPath = "golem_temp/_autosave_.txt"
 
@@ -584,12 +584,12 @@ end
 
 function PANEL:CloseTab( pTab, bSave )
 	if pTab == true then pTab = self.pnlTabHolder:GetActiveTab( ) end
-	if not ValidPanel( pTab ) then return end
+	if not IsValid( pTab ) then return end
 
 	if pTab.__type == "editor" then
 		local Editor = pTab:GetPanel( )
 
-		if bSave and pTab.FilePath and pTab.FilePath ~= "" and pTab.__lang == "e3" then // Ask about this?
+		if bSave and pTab.FilePath and pTab.FilePath ~= "" and pTab.__lang == "e3" then -- Ask about this?
 			self:SaveFile( pTab.FilePath, false, pTab, true )
 		end
 
@@ -625,7 +625,7 @@ end
 
 function PANEL:CloseMenuTab( pTab )
 	if pTab == true then pTab = self.pnlSideTabHolder:GetActiveTab( ) end
-	if not ValidPanel( pTab ) then return end
+	if not IsValid( pTab ) then return end
 
 	if self.tMenuTypes[pTab.__type] then
 		self.tMenuTypes[pTab.__type].Close( self, pTab, bSave )
@@ -641,7 +641,7 @@ function PANEL:CloseAll( )
 end
 
 function PANEL:CloseAllBut( pTab )
-	if not ValidPanel( pTab ) then return end
+	if not IsValid( pTab ) then return end
 	local found = 0
 	while #self.pnlTabHolder.Items > 0 + found do
 		if self.pnlTabHolder.Items[found+1].Tab == pTab then
@@ -663,7 +663,7 @@ end
 function PANEL:GetCode( pTab )
 	pTab = pTab or self.pnlTabHolder:GetActiveTab( )
 	if not pTab then return end
-	if not ValidPanel( pTab ) then return end
+	if not IsValid( pTab ) then return end
 	if pTab.__type ~= "editor" then return end
 	return pTab:GetPanel( ):GetCode( ), pTab.FilePath, pTab:GetName( )
 end
@@ -671,14 +671,14 @@ end
 function PANEL:SetName( sName, pTab )
 	pTab = pTab or self.pnlTabHolder:GetActiveTab( )
 	if not pTab then return end
-	if not ValidPanel( pTab ) then return end
+	if not IsValid( pTab ) then return end
 	pTab:SetName( sName )
 end
 
 function PANEL:GetName( pTab )
 	pTab = pTab or self.pnlTabHolder:GetActiveTab( )
 	if not pTab then return end
-	if not ValidPanel( pTab ) then return end
+	if not IsValid( pTab ) then return end
 	return pTab:GetName( )
 end
 
@@ -746,7 +746,7 @@ function PANEL:SaveFile( sPath, bSaveAs, pTab, bNoSound )
 		return true
 	end
 
-	if not ValidPanel( pTab ) then return end
+	if not IsValid( pTab ) then return end
 	if not string.EndsWith( sPath, ".txt" ) then sPath = sPath .. ".txt" end
 	if not string.StartWith( sPath, "golem/" ) then sPath = "golem/" .. sPath end
 
@@ -793,7 +793,7 @@ local function TempID( )
 end
 
 function PANEL:SaveTempFile( Tab )
-	if not ValidPanel( Tab ) or Tab.__type ~= "editor" or not Tab.__shouldsave then return end
+	if not IsValid( Tab ) or Tab.__type ~= "editor" or not Tab.__shouldsave then return end
 	local sCode = Tab:GetPanel( ):GetCode( )
 	local sPath = Tab.TempFile or "golem_temp/" .. TempID( ) .. ".txt"
 	MakeFolders( sPath )
@@ -842,14 +842,12 @@ function PANEL:OpenOldTabs( )
 
 	local opentabs = false
 	for k, v in pairs( tabs ) do
-		if v and v ~= "" then
-			if file.Exists( v, "DATA" ) then
-				if string.StartWith( v, "golem_temp" ) then
-					if self:LoadTempFile( v ) then opentabs = true end
-				else
-					self:LoadFile( v )
-					opentabs = true
-				end
+		if v and v ~= "" and file.Exists( v, "DATA" ) then
+			if string.StartWith( v, "golem_temp" ) then
+				if self:LoadTempFile( v ) then opentabs = true end
+			else
+				self:LoadFile( v )
+				opentabs = true
 			end
 		end
 	end
@@ -936,7 +934,7 @@ function PANEL:DoValidate( Goto, Code, Native )
 
 		self.validator = nil;
 
-		timer.Destroy("Golem_Validator");
+		timer.Remove("Golem_Validator");
 	end
 
 	self.validator = EXPR_LIB.Validate(cb, Code);
@@ -1377,10 +1375,10 @@ function PANEL:SaveCoords( )
 end
 
 function PANEL:ShowCloseButton( Bool )
-	if Bool and not ValidPanel( self.btnClose ) then
+	if Bool and not IsValid( self.btnClose ) then
 		self.btnClose = vgui.Create( "GOLEM_CloseButton", self )
 		self.btnClose:SetOffset( -5, 5 )
-	elseif not Bool and ValidPanel( self.btnClose ) then
+	elseif not Bool and IsValid( self.btnClose ) then
 		self.btnClose:Remove( )
 	end
 end

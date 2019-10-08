@@ -17,7 +17,7 @@ function Golem.Create( )
 	if Golem.Instance then return end
 	Golem.Instance = vgui.Create( "GOLEM_IDE" )
 	Golem.Instance:SetText( "Expression 3 IDE - Golem" )
-	Golem.Instance:SetIcon( "fugue/application-sidebar-list.png" ) // Keep or not to keep, that is the question.
+	Golem.Instance:SetIcon( "fugue/application-sidebar-list.png" ) -- Keep or not to keep, that is the question.
 	Golem.Instance:Open( )
 
 	/*local function SyntaxColorLine( self, Row )
@@ -73,8 +73,8 @@ function Golem.Reload( )
 	include("expression3/editor/derma/console2.lua");
 
 	include( "expression3/editor/derma/syntaxer.lua" )
-	
-	include( "expression3/editor/derma/syntax.lua" ) 
+
+	include( "expression3/editor/derma/syntax.lua" )
 	include( "expression3/editor/derma/syntax/syntax_e3.lua" )
 	include( "expression3/editor/derma/syntax/syntax_lua.lua" )
 	include( "expression3/editor/derma/syntax/syntax_console.lua" )

@@ -95,13 +95,13 @@ function PANEL:Init()
 
 	table.insert(derma, {name = name, panel = NodeWeb, parents = {}})
 
-	--[[local NodeWeb = Tree:AddNode("E3 on youtube")
+	/*local NodeWeb = Tree:AddNode("E3 on youtube")
 	NodeWeb.Icon:SetImage("fugue/youtube.png")
 	NodeWeb.DoClick = function()
 		gui.OpenURL("http://youtube.com/expression3gate")
 	end
 
-	table.insert(derma, {name = name, panel = NodeWeb, parents = {}})]]
+	table.insert(derma, {name = name, panel = NodeWeb, parents = {}})*/
 
 	--------Examples--------
 	local NodeExam = Tree:AddNode("Examples")

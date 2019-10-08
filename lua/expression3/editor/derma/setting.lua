@@ -22,7 +22,7 @@ function WHEELRGB:Init()
 
 	self:SetMinSaturation(0.5);
 	self:SetMaxSaturation(1);
-	
+
 	self:SetColor(255, 255, 255);
 end
 
@@ -205,7 +205,7 @@ function WHEELRGB:OnMouseReleased()
 		self:OnCursorMoved(self:CursorPos());
 		self:SetAlteringColor(false);
 		return;
-	end 
+	end
 end
 
 vgui.Register( "DColorWheelPanel", WHEELRGB, "EditablePanel" );
@@ -577,7 +577,7 @@ function WHEEL:Init()
 	canvas.Paint = function(_, w, h)
 		local open = self:IsOpen();
 		local color = self:GetValue();
-		
+
 		local wide = w - 24;
 
 		draw.RoundedBox( 8, 20, 2, wide, h - 4, color);
@@ -634,7 +634,7 @@ vgui.Register( "GOLEM_Setting_Color", WHEEL, "GOLEM_Setting_Expandable" );
 
 local PANEL = {};
 
-function PANEL:Init()	
+function PANEL:Init()
 	self.testBool = self:Add("GOLEM_Setting_OnOff");
 	self.testBool:SetUp("Boolean", nil, nil, "This setting is on.", "This setting is off.");
 	self.testBool:Dock(TOP);
