@@ -93,7 +93,7 @@ local function cmdhelp( sCommand, sArg )
 
 	if sArg == "" then
 		for i, name in ipairs( tCommands ) do
-			tOut[#tOut+1] = sCommand .. " " .. name
+			tOut[#tOut + 1] = sCommand .. " " .. name
 		end
 		return tOut
 	end
@@ -106,18 +106,18 @@ local function cmdhelp( sCommand, sArg )
 				if name == tArg[2] then
 					for token, color in pairs( data.Colors ) do
 						if token == tArg[3] then
-							tOut[#tOut+1] = sCommand .. " color " .. name .. " " .. token .. string.format( " %d_%d_%d", color.r, color.g, color.b )
+							tOut[#tOut + 1] = sCommand .. " color " .. name .. " " .. token .. string.format( " %d_%d_%d", color.r, color.g, color.b )
 						elseif string.StartWith( token, tArg[3] or "" ) then
-							tOut[#tOut+1] = sCommand .. " color " .. name .. " " .. token
+							tOut[#tOut + 1] = sCommand .. " color " .. name .. " " .. token
 						end
 					end
 				elseif string.StartWith( name, tArg[2] ) then
-					tOut[#tOut+1] = sCommand .. " color " .. name
+					tOut[#tOut + 1] = sCommand .. " color " .. name
 				end
 			end
 		else
 			for name, data in pairs( Syntax.Colors ) do
-				tOut[#tOut+1] = sCommand .. " color " .. name
+				tOut[#tOut + 1] = sCommand .. " color " .. name
 			end
 		end
 
@@ -128,7 +128,7 @@ local function cmdhelp( sCommand, sArg )
 
 	for i, name in ipairs( tCommands ) do
 		if string.StartWith( string.lower( name ), tArg[1] ) then
-			tOut[#tOut+1] = sCommand .. " " .. name
+			tOut[#tOut + 1] = sCommand .. " " .. name
 		end
 	end
 

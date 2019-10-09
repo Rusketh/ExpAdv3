@@ -20,7 +20,7 @@ local sWelcomeTab = [[
 /*
     Welcome to the Expression Advanced Three, beta.
     This project is a huge work in progress, there are bugs.
-        To report bugs, https:--github.com/Rusketh/ExpAdv3/issues
+        To report bugs, https://github.com/Rusketh/ExpAdv3/issues
 
     To get you started we have crafted this quick and simple welcome screen.
 
@@ -37,7 +37,7 @@ local sWelcomeTab = [[
 
 @name "Welcome Tab";
 
---   Variables are not cammelcased but require class deceleration.
+//    Variables are not cammelcased but require class deceleration.
 
 int var = 21;
 
@@ -47,7 +47,7 @@ int var = 21;
 
 table egTable = new table();
 
---   Get and set are the same as in e2.
+//   Get and set are the same as in e2.
 
 egTable[1, int] = var * 2;
 
@@ -57,7 +57,7 @@ egTable[1, int] = var * 2;
 
 system.print("A:" + egTable[1, int]);
 
---   Methods are differnt it is object.method and not object:method like in e2.
+//   Methods are differnt it is object.method and not object:method like in e2.
 
 vector vec = new vector(10, 20, 30);
 
@@ -77,7 +77,7 @@ local sDefaultGateTab = [[
 
 /*
 	Generic Gate Code.
-	Wiki: https:--github.com/Rusketh/ExpAdv3/wiki or [?].
+	Wiki: https://github.com/Rusketh/ExpAdv3/wiki or [?].
 */
 
 function void Main() {
@@ -85,7 +85,7 @@ function void Main() {
 }
 
 function void Loop() {
-	--Same as RunOnTick;
+	//Same as RunOnTick;
 }
 
 event.add("Think", "Loop", Loop);
@@ -100,7 +100,7 @@ local sDefaultScreenTab = [[
 	This code uses another E3-Gates Screen events,
 	providing an additonal parameter for the screens entity.
 
-	Wiki: https:--github.com/Rusketh/ExpAdv3/wiki or [?].
+	Wiki: https://github.com/Rusketh/ExpAdv3/wiki or [?].
 */
 
 entity gate = new entity(0);
@@ -133,8 +133,8 @@ event.add("UseScreen", "Interact", function(int x, int y, player who) {
 ]]
 
 local function sDefaultScript()
-	local screen = GetConVarString("gmod_toolmode") == "wire_expression3_screen";
-	print("sDefaultScript",screen,GetConVarString("gmod_toolmode"));
+	local screen = GetConVar("gmod_toolmode"):GetString() == "wire_expression3_screen";
+	print("sDefaultScript",screen,GetConVar("gmod_toolmode"):GetString());
 	return screen and sDefaultScreenTab or sDefaultGateTab;
 end
 

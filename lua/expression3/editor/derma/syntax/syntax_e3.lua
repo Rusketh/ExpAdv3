@@ -873,7 +873,7 @@ function Syntax:Parse( )
 						self:NextCharacter( )
 					end
 					self:AddToken( "comment" )
-				elseif self.sChar == "/" then -- Single line comment type --
+				elseif self.sChar == "/" then -- Single line comment type //
 					self:NextPattern( ".*" )
 					self:AddToken( "comment" )
 				else
